@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://localhost:8025/api/v1'
+  apiBaseUrl: 'https://omar-kortam-omar-space.hf.space/api/v1'
 };
