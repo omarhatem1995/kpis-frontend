@@ -27,6 +27,9 @@ jobs:
       - name: Build
         run: npm run build -- --configuration production --base-href /kpis-frontend/
 
+      - name: Copy index.html to 404.html for Angular routing
+        run: cp dist/cic-kpi-portal/browser/index.html dist/cic-kpi-portal/browser/404.html
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
