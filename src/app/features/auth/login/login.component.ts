@@ -30,19 +30,27 @@ import { AuthService } from '../../../core/auth/auth.service';
               required
               placeholder="you@cic.ae"
               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              [class.border-danger]="domainError()"
             />
-            <p *ngIf="domainError()" class="text-xs text-danger mt-1">
-              Only &#64;cic.ae email addresses can access this portal
-            </p>
+          </div>
+
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input
+              type="password"
+              name="password"
+              [(ngModel)]="password"
+              required
+              placeholder="Enter your password"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
           </div>
 
           <button
             type="submit"
-            [disabled]="loading() || !email"
+            [disabled]="loading() || !email || !password"
             class="w-full bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {{ loading() ? 'Sending…' : 'Send login code' }}
+            {{ loading() ? 'Signing in…' : 'Sign in' }}
           </button>
         </form>
 
@@ -56,25 +64,22 @@ export class LoginComponent {
   private readonly router = inject(Router);
 
   email = '';
+  password = '';
   loading = signal(false);
   error = signal('');
 
-  domainError(): boolean {
-    return !!this.email && !this.email.toLowerCase().endsWith('@cic.ae');
-  }
-
   submit(): void {
-    if (this.domainError() || !this.email) return;
+    if (!this.email || !this.password) return;
     this.loading.set(true);
     this.error.set('');
-    this.auth.requestOtp(this.email).subscribe({
-      next: () => {
+    this.auth.login(this.email, this.password).subscribe({
+      next: res => {
         this.loading.set(false);
-        this.router.navigate(['/verify-otp'], { state: { email: this.email } });
+        this.router.navigate([res.role === 'MANAGER' ? '/manager' : '/member']);
       },
       error: err => {
         this.loading.set(false);
-        this.error.set(err?.error?.error ?? 'Something went wrong. Please try again.');
+        this.error.set(err?.error?.error ?? 'Invalid email or password.');
       }
     });
   }

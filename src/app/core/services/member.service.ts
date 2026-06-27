@@ -37,6 +37,10 @@ export class MemberService {
     return this.http.patch<MemberSummary>(`${this.base}/manager/members/${userId}`, req);
   }
 
+  setMemberPassword(userId: number, password: string): Observable<void> {
+    return this.http.put<void>(`${this.base}/manager/members/${userId}/password`, { password });
+  }
+
   getMemberWfhSchedule(userId: number): Observable<WfhScheduleResponse> {
     return this.http.get<WfhScheduleResponse>(`${this.base}/manager/members/${userId}/wfhSchedule`);
   }

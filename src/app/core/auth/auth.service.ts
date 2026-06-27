@@ -50,6 +50,16 @@ export class AuthService {
     return u ? JSON.parse(u).role : null;
   }
 
+  login(email: string, password: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${environment.apiBaseUrl}/auth/login`, { email, password }).pipe(
+      tap(res => {
+        localStorage.setItem(this.TOKEN_KEY, res.token);
+        localStorage.setItem(this.USER_KEY, JSON.stringify({ userId: res.userId, name: res.name, role: res.role }));
+        this._role$.next(res.role);
+      })
+    );
+  }
+
   requestOtp(email: string): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${environment.apiBaseUrl}/auth/requestOtp`, { email });
   }

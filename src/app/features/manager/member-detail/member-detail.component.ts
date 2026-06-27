@@ -74,6 +74,21 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
             <button (click)="saveProfile()" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-hover">Save changes</button>
           </div>
         </div>
+
+        <!-- Set Password -->
+        <div *ngIf="editProfile" class="mt-4 pt-4 border-t border-gray-100">
+          <p class="text-xs font-medium text-gray-600 mb-2">Set / Change Password</p>
+          <div class="flex gap-2">
+            <input [(ngModel)]="newPassword" type="password" placeholder="New password (min 6 chars)"
+              class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+            <button (click)="savePassword()"
+              [disabled]="newPassword.length < 6"
+              class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 disabled:opacity-50">
+              Set password
+            </button>
+          </div>
+          <p *ngIf="passwordSaved()" class="text-xs text-green-600 mt-1">Password updated.</p>
+        </div>
       </div>
 
       <!-- WFH Schedule -->
@@ -201,6 +216,8 @@ export class MemberDetailComponent implements OnInit {
   editingRatingId: number | null = null;
   editRatingValue = 0;
   editRatingComment = '';
+  newPassword = '';
+  passwordSaved = signal(false);
 
   inlineRating(id: number): number { return this.inlineRatings.get(id) ?? 0; }
   setInlineRating(id: number, r: number): void { this.inlineRatings.set(id, r); }
@@ -213,6 +230,14 @@ export class MemberDetailComponent implements OnInit {
 
   toggleKpiSection(key: string): void {
     this.openKpiSections.has(key) ? this.openKpiSections.delete(key) : this.openKpiSections.add(key);
+  }
+
+  savePassword(): void {
+    this.memberService.setMemberPassword(+this.id, this.newPassword).subscribe(() => {
+      this.newPassword = '';
+      this.passwordSaved.set(true);
+      setTimeout(() => this.passwordSaved.set(false), 3000);
+    });
   }
 
   saveProfile(): void {
