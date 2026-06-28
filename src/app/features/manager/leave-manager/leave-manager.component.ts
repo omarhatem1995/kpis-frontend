@@ -3,14 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MemberService } from '../../../core/services/member.service';
 import { LeaveRequestResponse, LeaveStatus } from '../../../core/models/leave-request.model';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-leave-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoadingComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div>
+      <app-loading *ngIf="loading()" />
+      <ng-container *ngIf="!loading()">
       <h2 class="text-lg font-semibold text-gray-900 mb-6">Leave Requests</h2>
 
       <!-- Filter tabs -->
@@ -59,6 +62,7 @@ import { LeaveRequestResponse, LeaveStatus } from '../../../core/models/leave-re
 
         <p *ngIf="!requests().length" class="text-sm text-gray-400 text-center py-8">No leave requests found.</p>
       </div>
+      </ng-container>
     </div>
   `
 })
@@ -66,6 +70,7 @@ export class LeaveManagerComponent implements OnInit {
   private readonly memberService = inject(MemberService);
 
   requests = signal<LeaveRequestResponse[]>([]);
+  loading = signal(true);
   activeTab = signal<string>('');
   noteFor: Record<number, string> = {};
 
@@ -92,8 +97,9 @@ export class LeaveManagerComponent implements OnInit {
   }
 
   load(): void {
+    this.loading.set(true);
     const status = this.activeTab() || undefined;
-    this.memberService.getLeaveRequests(status).subscribe(r => this.requests.set(r));
+    this.memberService.getLeaveRequests(status).subscribe(r => { this.requests.set(r); this.loading.set(false); });
   }
 
   ngOnInit(): void { this.load(); }

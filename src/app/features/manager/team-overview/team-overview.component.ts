@@ -5,14 +5,17 @@ import { MemberService } from '../../../core/services/member.service';
 import { MemberSummary } from '../../../core/models/user.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { ScorePillComponent } from '../../../shared/components/score-pill/score-pill.component';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-team-overview',
   standalone: true,
-  imports: [CommonModule, RouterLink, AvatarComponent, ScorePillComponent],
+  imports: [CommonModule, RouterLink, AvatarComponent, ScorePillComponent, LoadingComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div>
+      <app-loading *ngIf="loading()" />
+      <ng-container *ngIf="!loading()">
       <h2 class="text-lg font-semibold text-gray-900 mb-6">Team Overview</h2>
 
       <!-- Stat cards -->
@@ -66,6 +69,7 @@ import { ScorePillComponent } from '../../../shared/components/score-pill/score-
           </div>
         </a>
       </div>
+      </ng-container>
     </div>
   `
 })
@@ -73,6 +77,7 @@ export class TeamOverviewComponent implements OnInit {
   private readonly memberService = inject(MemberService);
 
   members = signal<MemberSummary[]>([]);
+  loading = signal(true);
   filter = signal('All');
   teamFilters = ['All', 'Frontend', 'Backend', 'Testing', 'Flutter'];
 
@@ -89,5 +94,5 @@ export class TeamOverviewComponent implements OnInit {
   get atRiskCount(): number { return this.members().filter(m => (m.kpiTotal ?? 0) < 55 && m.kpiTotal != null).length; }
   get pendingCount(): number { return this.members().reduce((s, m) => s + m.unratedCount, 0); }
 
-  ngOnInit(): void { this.memberService.getMembers().subscribe(m => this.members.set(m)); }
+  ngOnInit(): void { this.memberService.getMembers().subscribe(m => { this.members.set(m); this.loading.set(false); }); }
 }

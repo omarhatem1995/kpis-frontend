@@ -4,16 +4,19 @@ import { Router, RouterLink } from '@angular/router';
 import { LogService } from '../../../core/services/log.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ScorePillComponent } from '../../../shared/components/score-pill/score-pill.component';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { DailyLogResponse } from '../../../core/models/daily-log.model';
 import { KpiReport } from '../../../core/models/kpi-report.model';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, ScorePillComponent],
+  imports: [CommonModule, RouterLink, ScorePillComponent, LoadingComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div>
+      <app-loading *ngIf="loading()" />
+      <ng-container *ngIf="!loading()">
       <h2 class="text-lg font-semibold text-gray-900 mb-1">Good {{ greeting }}, {{ firstName }}</h2>
       <p class="text-sm text-gray-500 mb-6">{{ today }}</p>
 
@@ -94,8 +97,9 @@ import { KpiReport } from '../../../core/models/kpi-report.model';
           <p class="text-xs text-gray-500 truncate">{{ log.projectName ?? 'No project' }}</p>
           <p class="text-xs text-gray-600 mt-1 line-clamp-2">{{ log.tasksDescription }}</p>
         </div>
-        <p *ngIf="!recentLogs.length && !loading()" class="text-sm text-gray-400 text-center py-4">No logs yet this month.</p>
+        <p *ngIf="!recentLogs.length" class="text-sm text-gray-400 text-center py-4">No logs yet this month.</p>
       </div>
+      </ng-container>
     </div>
   `
 })

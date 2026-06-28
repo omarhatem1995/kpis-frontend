@@ -7,14 +7,17 @@ import { DailyLogResponse } from '../../../core/models/daily-log.model';
 import { StarRatingComponent } from '../../../shared/components/star-rating/star-rating.component';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { LogCommentsComponent } from '../../../shared/components/log-comments/log-comments.component';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-log-history',
   standalone: true,
-  imports: [CommonModule, FormsModule, StarRatingComponent, AvatarComponent, LogCommentsComponent],
+  imports: [CommonModule, FormsModule, StarRatingComponent, AvatarComponent, LogCommentsComponent, LoadingComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div>
+      <app-loading *ngIf="loading()" />
+      <ng-container *ngIf="!loading()">
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-lg font-semibold text-gray-900">Log History</h2>
         <input type="month" [(ngModel)]="selectedMonth" (ngModelChange)="loadLogs()"
@@ -76,10 +79,11 @@ import { LogCommentsComponent } from '../../../shared/components/log-comments/lo
           <app-log-comments [logId]="log.id" />
         </div>
 
-        <p *ngIf="!logs().length && !loading()" class="text-sm text-gray-400 text-center py-8">
+        <p *ngIf="!logs().length" class="text-sm text-gray-400 text-center py-8">
           No logs for {{ selectedMonth }}.
         </p>
       </div>
+      </ng-container>
     </div>
   `
 })

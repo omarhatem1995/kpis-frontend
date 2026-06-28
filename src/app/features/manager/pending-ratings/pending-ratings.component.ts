@@ -6,19 +6,22 @@ import { DailyLogResponse } from '../../../core/models/daily-log.model';
 import { StarRatingComponent } from '../../../shared/components/star-rating/star-rating.component';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { LogCommentsComponent } from '../../../shared/components/log-comments/log-comments.component';
+import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 
 interface RatingState { rating: number; comment: string; saving: boolean; }
 
 @Component({
   selector: 'app-pending-ratings',
   standalone: true,
-  imports: [CommonModule, FormsModule, StarRatingComponent, AvatarComponent, LogCommentsComponent],
+  imports: [CommonModule, FormsModule, StarRatingComponent, AvatarComponent, LogCommentsComponent, LoadingComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div>
+      <app-loading *ngIf="loading()" />
+      <ng-container *ngIf="!loading()">
       <h2 class="text-lg font-semibold text-gray-900 mb-6">Pending Ratings</h2>
 
-      <div *ngIf="!logs().length && !loading()" class="text-center py-12">
+      <div *ngIf="!logs().length" class="text-center py-12">
         <p class="text-2xl mb-2">✅</p>
         <p class="text-sm font-medium text-gray-700">All caught up — nothing to rate</p>
         <p class="text-xs text-gray-400 mt-1">Check back after team members submit their logs</p>
@@ -84,6 +87,7 @@ interface RatingState { rating: number; comment: string; saving: boolean; }
           </div>
         </div>
       </div>
+      </ng-container>
     </div>
   `
 })
