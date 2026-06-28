@@ -1,4 +1,4 @@
-export type UserRole = 'MEMBER' | 'MANAGER';
+export type UserRole = 'MEMBER' | 'TEAM_LEAD' | 'MANAGER';
 export type TeamName = 'Frontend' | 'Backend' | 'Testing' | 'Flutter';
 export type DayOfWeek = 'SUNDAY' | 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY';
 
@@ -17,6 +17,7 @@ export interface MemberSummary {
   team: TeamName | null;
   module: string | null;
   isActive: boolean;
+  teamLeadId: number | null;
   logCountThisMonth: number;
   avgRating: number | null;
   kpiTotal: number | null;
@@ -33,4 +34,5 @@ export interface UpdateMemberRequest {
   module?: string;
   role?: UserRole;
   isActive?: boolean;
+  teamLeadId?: number;
 }

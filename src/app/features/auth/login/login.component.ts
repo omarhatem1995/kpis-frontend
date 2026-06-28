@@ -75,7 +75,8 @@ export class LoginComponent {
     this.auth.login(this.email, this.password).subscribe({
       next: res => {
         this.loading.set(false);
-        this.router.navigate([res.role === 'MANAGER' ? '/manager' : '/member']);
+        const isManagerLike = res.role === 'MANAGER' || res.role === 'TEAM_LEAD';
+        this.router.navigate([isManagerLike ? '/manager' : '/member']);
       },
       error: err => {
         this.loading.set(false);

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MemberService } from '../../../core/services/member.service';
 import { RatingService } from '../../../core/services/rating.service';
-import { MemberSummary, DayOfWeek, TeamName } from '../../../core/models/user.model';
+import { MemberSummary, DayOfWeek, TeamName, UserRole } from '../../../core/models/user.model';
 import { DailyLogResponse } from '../../../core/models/daily-log.model';
 import { KpiReport } from '../../../core/models/kpi-report.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
@@ -67,7 +67,15 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
             <label class="block text-xs font-medium text-gray-600 mb-1">Role</label>
             <select [(ngModel)]="editRole" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
               <option value="MEMBER">Member</option>
+              <option value="TEAM_LEAD">Team Lead</option>
               <option value="MANAGER">Manager</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Team Lead</label>
+            <select [(ngModel)]="editTeamLeadId" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+              <option [ngValue]="null">— none —</option>
+              <option *ngFor="let lead of teamLeads" [ngValue]="lead.userId">{{ lead.name }}</option>
             </select>
           </div>
           <div class="sm:col-span-2">
@@ -207,7 +215,9 @@ export class MemberDetailComponent implements OnInit {
   editName = '';
   editTeam: TeamName | '' = '';
   editModule = '';
-  editRole: 'MEMBER' | 'MANAGER' = 'MEMBER';
+  editRole: UserRole = 'MEMBER';
+  editTeamLeadId: number | null = null;
+  teamLeads: MemberSummary[] = [];
   wfhDaysEdit: DayOfWeek[] = [];
   allDays = ALL_DAYS;
   teams: TeamName[] = ['Frontend', 'Backend', 'Testing', 'Flutter'];
@@ -246,7 +256,8 @@ export class MemberDetailComponent implements OnInit {
       name: this.editName || undefined,
       team: (this.editTeam as TeamName) || undefined,
       module: this.editModule || undefined,
-      role: this.editRole
+      role: this.editRole,
+      teamLeadId: this.editTeamLeadId ?? undefined
     }).subscribe(m => { this.member.set(m); this.editProfile = false; });
   }
 
@@ -286,6 +297,7 @@ export class MemberDetailComponent implements OnInit {
     const quarter = `${now.getFullYear()}-Q${Math.ceil((now.getMonth() + 1) / 3)}`;
 
     this.memberService.getMembers().subscribe(ms => {
+      this.teamLeads = ms.filter(m => m.role === 'TEAM_LEAD' || m.role === 'MANAGER');
       const m = ms.find(x => x.userId === uid) ?? null;
       if (m) {
         this.member.set(m);
@@ -293,6 +305,7 @@ export class MemberDetailComponent implements OnInit {
         this.editTeam = m.team ?? '';
         this.editModule = m.module ?? '';
         this.editRole = m.role;
+        this.editTeamLeadId = m.teamLeadId;
       }
     });
     this.memberService.getMemberLogs(uid, month).subscribe(logs => {
