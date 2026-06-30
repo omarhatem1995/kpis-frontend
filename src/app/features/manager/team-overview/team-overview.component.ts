@@ -21,95 +21,133 @@ const PAGE_SIZE = 12;
       <app-loading *ngIf="loading()" />
       <ng-container *ngIf="!loading()">
 
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-semibold text-gray-900">Team Overview</h2>
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-5">
+        <h1 class="text-xl font-bold text-gray-900">Team Overview</h1>
         <button *ngIf="isManager" (click)="showCreate = true"
-          class="flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-hover">
-          + Add member
+          class="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add Member
         </button>
       </div>
 
       <!-- Stat cards -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <p class="text-xs text-gray-500 mb-1">Total members</p>
-          <p class="text-2xl font-semibold text-gray-900">{{ totalItems() }}</p>
+        <div class="bg-white rounded-2xl p-4 shadow-card">
+          <div class="w-9 h-9 bg-primary-light rounded-xl flex items-center justify-center mb-3">
+            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <p class="text-2xl font-bold text-gray-900">{{ totalItems() }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">Members</p>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <p class="text-xs text-gray-500 mb-1">Avg team score</p>
-          <p class="text-2xl font-semibold text-gray-900">{{ avgScore | number:'1.1-1' }}</p>
+        <div class="bg-white rounded-2xl p-4 shadow-card">
+          <div class="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center mb-3">
+            <svg class="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+          <p class="text-2xl font-bold text-gray-900">{{ avgScore | number:'1.1-1' }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">Avg Score</p>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <p class="text-xs text-gray-500 mb-1">At risk</p>
-          <p class="text-2xl font-semibold text-red-600">{{ atRiskCount }}</p>
+        <div class="bg-white rounded-2xl p-4 shadow-card">
+          <div class="w-9 h-9 bg-red-50 rounded-xl flex items-center justify-center mb-3">
+            <svg class="w-5 h-5 text-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <p class="text-2xl font-bold text-red-500">{{ atRiskCount }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">At Risk</p>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <p class="text-xs text-gray-500 mb-1">Pending ratings</p>
-          <p class="text-2xl font-semibold text-amber-600">{{ pendingCount }}</p>
+        <div class="bg-white rounded-2xl p-4 shadow-card">
+          <div class="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center mb-3">
+            <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+            </svg>
+          </div>
+          <p class="text-2xl font-bold text-amber-500">{{ pendingCount }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">Pending Ratings</p>
         </div>
       </div>
 
-      <!-- Search + Team + Module filter -->
-      <div class="flex flex-col sm:flex-row gap-3 mb-4">
-        <input [(ngModel)]="searchInput" (ngModelChange)="onSearchChange()"
-          type="text" placeholder="Search by name or email…"
-          class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-        <select [(ngModel)]="activeModule" (ngModelChange)="selectModule($event)"
-          class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-          <option value="All">All modules</option>
-          <option *ngFor="let m of moduleFilters" [value]="m">{{ m }}</option>
-        </select>
-      </div>
-      <div class="flex gap-2 flex-wrap mb-4">
-        <button *ngFor="let t of teamFilters" (click)="selectTeam(t)"
-          class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
-          [class]="activeTeam === t ? 'bg-primary text-white border-primary' : 'bg-white text-gray-600 border-gray-300 hover:border-primary'">
-          {{ t }}
-        </button>
+      <!-- Search + filters -->
+      <div class="bg-white rounded-2xl p-4 shadow-card mb-5">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input [(ngModel)]="searchInput" (ngModelChange)="onSearchChange()"
+              type="text" placeholder="Search by name or email…"
+              class="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-gray-50" />
+          </div>
+          <select [(ngModel)]="activeModule" (ngModelChange)="selectModule($event)"
+            class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-gray-50">
+            <option value="All">All modules</option>
+            <option *ngFor="let m of moduleFilters" [value]="m">{{ m }}</option>
+          </select>
+        </div>
+        <div class="flex gap-2 flex-wrap mt-3">
+          <button *ngFor="let t of teamFilters" (click)="selectTeam(t)"
+            class="px-3 py-1 rounded-full text-xs font-semibold border transition-all"
+            [class]="activeTeam === t ? 'bg-primary text-white border-primary' : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-primary hover:text-primary'">
+            {{ t }}
+          </button>
+        </div>
       </div>
 
       <!-- Member grid -->
-      <div *ngIf="members().length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <a *ngFor="let m of members()"
-          [routerLink]="['/manager/member', m.userId]"
-          class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-shadow flex items-start gap-3">
-          <app-avatar [name]="m.name" size="md" />
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 justify-between">
-              <p class="text-sm font-semibold text-gray-900 truncate">{{ m.name }}</p>
-              <app-score-pill [score]="m.kpiTotal" />
+      <div class="relative">
+        <div *ngIf="tableLoading()" class="absolute inset-0 bg-surface/70 flex items-center justify-center z-10 rounded-2xl">
+          <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <div *ngIf="members().length === 0 && !tableLoading()"
+          class="bg-white rounded-2xl shadow-card py-16 text-center text-gray-400 text-sm">
+          No members found.
+        </div>
+        <div *ngIf="members().length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+          <a *ngFor="let m of members()"
+            [routerLink]="['/manager/member', m.userId]"
+            class="bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-shadow p-4 flex items-center gap-3">
+            <app-avatar [name]="m.name" size="md" />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-sm font-semibold text-gray-900 truncate">{{ m.name }}</p>
+                <app-score-pill [score]="m.kpiTotal" />
+              </div>
+              <p class="text-xs text-gray-400 mt-0.5">{{ m.module ?? '—' }}</p>
+              <div class="flex items-center gap-2 mt-1.5">
+                <span *ngIf="m.unratedCount > 0"
+                  class="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium border border-amber-100">
+                  {{ m.unratedCount }} to rate
+                </span>
+                <span class="text-xs text-gray-300">{{ m.logCountThisMonth }} logs</span>
+              </div>
             </div>
-            <p class="text-xs text-gray-500 mt-0.5">{{ m.team ?? 'No team' }} · {{ m.module ?? '—' }}</p>
-            <div class="flex items-center gap-2 mt-2">
-              <span *ngIf="m.unratedCount > 0"
-                class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                {{ m.unratedCount }} to rate
-              </span>
-              <span class="text-xs text-gray-400">{{ m.logCountThisMonth }} logs this month</span>
-            </div>
-          </div>
-        </a>
-      </div>
-
-      <!-- Empty state -->
-      <div *ngIf="members().length === 0" class="text-center py-16 text-gray-400 text-sm">
-        No members found.
+            <svg class="w-4 h-4 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
       </div>
 
       <!-- Pagination -->
-      <div *ngIf="totalItems() > pageSize" class="flex items-center justify-between mt-2">
-        <p class="text-xs text-gray-500">
-          Showing {{ currentPage * pageSize + 1 }}–{{ min(currentPage * pageSize + members().length, totalItems()) }}
+      <div *ngIf="totalItems() > pageSize" class="flex items-center justify-between mt-1">
+        <p class="text-xs text-gray-400">
+          {{ currentPage * pageSize + 1 }}–{{ min(currentPage * pageSize + members().length, totalItems()) }}
           of {{ totalItems() }}
         </p>
         <div class="flex gap-2">
           <button (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 0"
-            class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50">
+            class="px-4 py-1.5 text-sm font-medium border border-gray-200 rounded-xl disabled:opacity-30 hover:bg-gray-50 transition-colors">
             ← Prev
           </button>
-          <span class="px-3 py-1.5 text-sm text-gray-700 font-medium">Page {{ currentPage + 1 }}</span>
+          <span class="px-3 py-1.5 text-sm text-gray-600 font-semibold">{{ currentPage + 1 }}</span>
           <button (click)="goToPage(nextPage())" [disabled]="isLastPage()"
-            class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50">
+            class="px-4 py-1.5 text-sm font-medium border border-gray-200 rounded-xl disabled:opacity-30 hover:bg-gray-50 transition-colors">
             Next →
           </button>
         </div>
@@ -202,6 +240,7 @@ export class TeamOverviewComponent implements OnInit {
 
   members = signal<MemberSummary[]>([]);
   loading = signal(true);
+  tableLoading = signal(false);
   totalItems = signal(0);
   private _nextPage = signal(0);
   private _lastPage = signal(true);
@@ -213,9 +252,9 @@ export class TeamOverviewComponent implements OnInit {
   searchInput = '';
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-  teamFilters = ['All', 'Technical'];
-  teams: TeamName[] = ['Technical'];
-  moduleFilters: ModuleName[] = ['Frontend', 'Backend', 'Testing', 'Flutter'];
+  teamFilters = ['All', 'TECHNICAL'];
+  teams: TeamName[] = ['TECHNICAL'];
+  moduleFilters: ModuleName[] = ['FRONTEND', 'BACKEND', 'TESTING', 'FLUTTER'];
 
   get isManager(): boolean { return this.auth.role === 'MANAGER'; }
   get teamLeads(): MemberSummary[] { return this.members().filter(m => m.role === 'TEAM_LEAD' || m.role === 'MANAGER'); }
@@ -253,8 +292,12 @@ export class TeamOverviewComponent implements OnInit {
     this.load();
   }
 
-  private load(): void {
-    this.loading.set(true);
+  private load(initial = false): void {
+    if (initial) {
+      this.loading.set(true);
+    } else {
+      this.tableLoading.set(true);
+    }
     const team = this.activeTeam !== 'All' ? this.activeTeam : undefined;
     const module = this.activeModule !== 'All' ? this.activeModule : undefined;
     const search = this.searchInput.trim() || undefined;
@@ -264,6 +307,7 @@ export class TeamOverviewComponent implements OnInit {
       this._nextPage.set(res.nextPage);
       this._lastPage.set(res.lastPage);
       this.loading.set(false);
+      this.tableLoading.set(false);
       this.cdr.markForCheck();
     });
   }
@@ -307,5 +351,5 @@ export class TeamOverviewComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load(true); }
 }

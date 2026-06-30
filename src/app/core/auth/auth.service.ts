@@ -76,6 +76,12 @@ export class AuthService {
     );
   }
 
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http.put<ApiResponse<void>>(`${environment.apiBaseUrl}/auth/changePassword`, { currentPassword, newPassword }).pipe(
+      map(() => void 0)
+    );
+  }
+
   loadWfhSchedule(): Observable<WfhScheduleResponse> {
     return this.http.get<ApiResponse<WfhScheduleResponse>>(`${environment.apiBaseUrl}/member/wfhSchedule`).pipe(
       map(r => r.data),

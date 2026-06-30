@@ -230,8 +230,8 @@ export class MemberDetailComponent implements OnInit {
   teamLeads: MemberSummary[] = [];
   wfhDaysEdit: DayOfWeek[] = [];
   allDays = ALL_DAYS;
-  teams: TeamName[] = ['Technical'];
-  modules: ModuleName[] = ['Frontend', 'Backend', 'Testing', 'Flutter'];
+  teams: TeamName[] = ['TECHNICAL'];
+  modules: ModuleName[] = ['FRONTEND', 'BACKEND', 'TESTING', 'FLUTTER'];
   openKpiSections = new Set<string>();
   private inlineRatings = new Map<number, number>();
   editingRatingId: number | null = null;

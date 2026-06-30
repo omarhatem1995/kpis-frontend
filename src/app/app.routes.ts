@@ -15,7 +15,8 @@ export const routes: Routes = [
       { path: 'log',       loadComponent: () => import('./features/member/daily-log-form/daily-log-form.component').then(m => m.DailyLogFormComponent) },
       { path: 'history',   loadComponent: () => import('./features/member/log-history/log-history.component').then(m => m.LogHistoryComponent) },
       { path: 'kpi',       loadComponent: () => import('./features/member/kpi-view/kpi-view.component').then(m => m.KpiViewComponent) },
-      { path: 'leave',     loadComponent: () => import('./features/member/leave-request/leave-request.component').then(m => m.LeaveRequestComponent) },
+      { path: 'leave',           loadComponent: () => import('./features/member/leave-request/leave-request.component').then(m => m.LeaveRequestComponent) },
+      { path: 'changePassword',  loadComponent: () => import('./features/auth/change-password/change-password.component').then(m => m.ChangePasswordComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
@@ -32,7 +33,8 @@ export const routes: Routes = [
       { path: 'export',   loadComponent: () => import('./features/manager/export/export.component').then(m => m.ExportComponent) },
       { path: 'leave',    loadComponent: () => import('./features/manager/leave-manager/leave-manager.component').then(m => m.LeaveManagerComponent) },
       { path: 'weekend',   loadComponent: () => import('./features/manager/weekend-config/weekend-config.component').then(m => m.WeekendConfigComponent) },
-      { path: 'projects',  loadComponent: () => import('./features/manager/projects/projects-manager.component').then(m => m.ProjectsManagerComponent) },
+      { path: 'projects',        loadComponent: () => import('./features/manager/projects/projects-manager.component').then(m => m.ProjectsManagerComponent) },
+      { path: 'changePassword',  loadComponent: () => import('./features/auth/change-password/change-password.component').then(m => m.ChangePasswordComponent) },
       { path: '', redirectTo: 'overview', pathMatch: 'full' }
     ]
   },

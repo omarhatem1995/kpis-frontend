@@ -15,8 +15,8 @@ export interface ApiResponsePaging<T> {
 }
 
 export type UserRole = 'MEMBER' | 'TEAM_LEAD' | 'MANAGER';
-export type TeamName = 'Technical';
-export type ModuleName = 'Frontend' | 'Backend' | 'Testing' | 'Flutter';
+export type TeamName = 'TECHNICAL';
+export type ModuleName = 'FRONTEND' | 'BACKEND' | 'TESTING' | 'FLUTTER';
 export type DayOfWeek = 'SUNDAY' | 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY';
 
 export interface AuthResponse {
