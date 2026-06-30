@@ -2,7 +2,9 @@ import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@ang
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
+import { ApiResponse } from '../../../core/models/user.model';
 
 type ProjectCategory = 'DEVELOPMENT' | 'REFACTOR' | 'SELF_STUDY';
 
@@ -176,7 +178,7 @@ export class ProjectsManagerComponent implements OnInit {
 
   private load() {
     this.loading.set(true);
-    this.http.get<Project[]>(this.base).subscribe({
+    this.http.get<ApiResponse<Project[]>>(this.base).pipe(map(r => r.data)).subscribe({
       next: list => { this.projects.set(list); this.loading.set(false); },
       error: ()  => this.loading.set(false)
     });
@@ -186,7 +188,7 @@ export class ProjectsManagerComponent implements OnInit {
     if (!this.newName.trim()) return;
     this.saving.set(true);
     this.error.set('');
-    this.http.post<Project>(this.base, { name: this.newName.trim(), category: this.newCategory, status: this.newStatus }).subscribe({
+    this.http.post<ApiResponse<Project>>(this.base, { name: this.newName.trim(), category: this.newCategory, status: this.newStatus }).pipe(map(r => r.data)).subscribe({
       next: p => {
         this.projects.update(list => [p, ...list]);
         this.newName = '';
@@ -211,7 +213,7 @@ export class ProjectsManagerComponent implements OnInit {
   cancelEdit() { this.editingId.set(null); }
 
   saveEdit(p: Project) {
-    this.http.patch<Project>(`${this.base}/${p.id}`, { name: this.editName, category: this.editCategory, status: this.editStatus }).subscribe({
+    this.http.patch<ApiResponse<Project>>(`${this.base}/${p.id}`, { name: this.editName, category: this.editCategory, status: this.editStatus }).pipe(map(r => r.data)).subscribe({
       next: updated => {
         this.projects.update(list => list.map(x => x.id === updated.id ? updated : x));
         this.editingId.set(null);
@@ -220,13 +222,13 @@ export class ProjectsManagerComponent implements OnInit {
   }
 
   removeProject(p: Project) {
-    this.http.patch<Project>(`${this.base}/${p.id}`, { isActive: false }).subscribe({
+    this.http.patch<ApiResponse<Project>>(`${this.base}/${p.id}`, { isActive: false }).pipe(map(r => r.data)).subscribe({
       next: updated => this.projects.update(list => list.map(x => x.id === updated.id ? updated : x))
     });
   }
 
   restoreProject(p: Project) {
-    this.http.patch<Project>(`${this.base}/${p.id}`, { isActive: true }).subscribe({
+    this.http.patch<ApiResponse<Project>>(`${this.base}/${p.id}`, { isActive: true }).pipe(map(r => r.data)).subscribe({
       next: updated => this.projects.update(list => list.map(x => x.id === updated.id ? updated : x))
     });
   }
