@@ -76,7 +76,7 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
           </div>
 
           <!-- Comments thread -->
-          <app-log-comments [logId]="log.id" />
+          <app-log-comments [logId]="log.id" [initialComments]="log.comments" [isRated]="!!log.rating" />
         </div>
 
         <p *ngIf="!logs().length" class="text-sm text-gray-400 text-center py-8">

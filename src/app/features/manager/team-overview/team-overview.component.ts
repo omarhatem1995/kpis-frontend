@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MemberService } from '../../../core/services/member.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { MemberSummary, TeamName, UserRole } from '../../../core/models/user.model';
+import { MemberSummary, TeamName, ModuleName, UserRole } from '../../../core/models/user.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { ScorePillComponent } from '../../../shared/components/score-pill/score-pill.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
@@ -49,18 +49,23 @@ const PAGE_SIZE = 12;
         </div>
       </div>
 
-      <!-- Search + Team filter -->
+      <!-- Search + Team + Module filter -->
       <div class="flex flex-col sm:flex-row gap-3 mb-4">
         <input [(ngModel)]="searchInput" (ngModelChange)="onSearchChange()"
           type="text" placeholder="Search by name or email…"
           class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-        <div class="flex gap-2 flex-wrap">
-          <button *ngFor="let t of teamFilters" (click)="selectTeam(t)"
-            class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
-            [class]="activeTeam === t ? 'bg-primary text-white border-primary' : 'bg-white text-gray-600 border-gray-300 hover:border-primary'">
-            {{ t }}
-          </button>
-        </div>
+        <select [(ngModel)]="activeModule" (ngModelChange)="selectModule($event)"
+          class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+          <option value="All">All modules</option>
+          <option *ngFor="let m of moduleFilters" [value]="m">{{ m }}</option>
+        </select>
+      </div>
+      <div class="flex gap-2 flex-wrap mb-4">
+        <button *ngFor="let t of teamFilters" (click)="selectTeam(t)"
+          class="px-3 py-1.5 rounded-full text-xs font-medium border transition-all"
+          [class]="activeTeam === t ? 'bg-primary text-white border-primary' : 'bg-white text-gray-600 border-gray-300 hover:border-primary'">
+          {{ t }}
+        </button>
       </div>
 
       <!-- Member grid -->
@@ -157,8 +162,11 @@ const PAGE_SIZE = 12;
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Module</label>
-            <input [(ngModel)]="form.module" type="text" placeholder="e.g. Backend, iOS, QA"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+            <select [(ngModel)]="form.module"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+              <option value="">— select —</option>
+              <option *ngFor="let m of moduleFilters" [value]="m">{{ m }}</option>
+            </select>
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Team Lead</label>
@@ -201,11 +209,13 @@ export class TeamOverviewComponent implements OnInit {
   currentPage = 0;
   readonly pageSize = PAGE_SIZE;
   activeTeam = 'All';
+  activeModule = 'All';
   searchInput = '';
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-  teamFilters = ['All', 'Frontend', 'Backend', 'Testing', 'Flutter', 'Technical'];
-  teams: TeamName[] = ['Frontend', 'Backend', 'Testing', 'Flutter', 'Technical'];
+  teamFilters = ['All', 'Technical'];
+  teams: TeamName[] = ['Technical'];
+  moduleFilters: ModuleName[] = ['Frontend', 'Backend', 'Testing', 'Flutter'];
 
   get isManager(): boolean { return this.auth.role === 'MANAGER'; }
   get teamLeads(): MemberSummary[] { return this.members().filter(m => m.role === 'TEAM_LEAD' || m.role === 'MANAGER'); }
@@ -227,6 +237,12 @@ export class TeamOverviewComponent implements OnInit {
     this.load();
   }
 
+  selectModule(module: string): void {
+    this.activeModule = module;
+    this.currentPage = 0;
+    this.load();
+  }
+
   onSearchChange(): void {
     if (this.searchTimer) clearTimeout(this.searchTimer);
     this.searchTimer = setTimeout(() => { this.currentPage = 0; this.load(); }, 350);
@@ -240,8 +256,9 @@ export class TeamOverviewComponent implements OnInit {
   private load(): void {
     this.loading.set(true);
     const team = this.activeTeam !== 'All' ? this.activeTeam : undefined;
+    const module = this.activeModule !== 'All' ? this.activeModule : undefined;
     const search = this.searchInput.trim() || undefined;
-    this.memberService.getMembers({ team, search, page: this.currentPage, size: this.pageSize }).subscribe(res => {
+    this.memberService.getMembers({ team, module, search, page: this.currentPage, size: this.pageSize }).subscribe(res => {
       this.members.set(res.data);
       this.totalItems.set(res.totalItems);
       this._nextPage.set(res.nextPage);
@@ -255,7 +272,7 @@ export class TeamOverviewComponent implements OnInit {
   showCreate = false;
   creating = false;
   createError = '';
-  form = { name: '', email: '', password: '', team: '' as TeamName | '', module: '', role: 'MEMBER' as UserRole, teamLeadId: undefined as number | undefined };
+  form = { name: '', email: '', password: '', team: '' as TeamName | '', module: '' as ModuleName | '', role: 'MEMBER' as UserRole, teamLeadId: undefined as number | undefined };
 
   closeCreate(): void {
     this.showCreate = false;
@@ -271,7 +288,7 @@ export class TeamOverviewComponent implements OnInit {
       email: this.form.email.trim(),
       password: this.form.password,
       team: (this.form.team || undefined) as TeamName | undefined,
-      module: this.form.module.trim() || undefined,
+      module: (this.form.module || undefined) as ModuleName | undefined,
       role: this.form.role,
       teamLeadId: this.form.teamLeadId
     };

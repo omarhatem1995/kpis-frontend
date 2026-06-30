@@ -14,9 +14,10 @@ export class MemberService {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiBaseUrl;
 
-  getMembers(params?: { team?: string; search?: string; page?: number; size?: number }): Observable<ApiResponsePaging<MemberSummary[]>> {
+  getMembers(params?: { team?: string; module?: string; search?: string; page?: number; size?: number }): Observable<ApiResponsePaging<MemberSummary[]>> {
     let httpParams = new HttpParams();
     if (params?.team)   httpParams = httpParams.set('team', params.team);
+    if (params?.module) httpParams = httpParams.set('module', params.module);
     if (params?.search) httpParams = httpParams.set('search', params.search);
     if (params?.page !== undefined) httpParams = httpParams.set('page', params.page);
     if (params?.size !== undefined) httpParams = httpParams.set('size', params.size);

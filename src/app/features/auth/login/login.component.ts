@@ -35,14 +35,24 @@ import { AuthService } from '../../../core/auth/auth.service';
 
           <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              name="password"
-              [(ngModel)]="password"
-              required
-              placeholder="Enter your password"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
+            <div class="relative">
+              <input
+                [type]="showPassword() ? 'text' : 'password'"
+                name="password"
+                [(ngModel)]="password"
+                required
+                placeholder="Enter your password"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+              <button
+                type="button"
+                (click)="showPassword.set(!showPassword())"
+                tabindex="-1"
+                class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+              >
+                <span class="text-xs font-medium">{{ showPassword() ? 'Hide' : 'Show' }}</span>
+              </button>
+            </div>
           </div>
 
           <button
@@ -65,6 +75,7 @@ export class LoginComponent {
 
   email = '';
   password = '';
+  showPassword = signal(false);
   loading = signal(false);
   error = signal('');
 
@@ -80,7 +91,7 @@ export class LoginComponent {
       },
       error: err => {
         this.loading.set(false);
-        this.error.set(err?.error?.error ?? 'Invalid email or password.');
+        this.error.set(err?.error?.message ?? 'Invalid email or password.');
       }
     });
   }

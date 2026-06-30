@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MemberService } from '../../../core/services/member.service';
 import { RatingService } from '../../../core/services/rating.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { MemberSummary, DayOfWeek, TeamName, UserRole } from '../../../core/models/user.model';
+import { MemberSummary, DayOfWeek, TeamName, ModuleName, UserRole } from '../../../core/models/user.model';
 import { DailyLogResponse } from '../../../core/models/daily-log.model';
 import { KpiReport } from '../../../core/models/kpi-report.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
@@ -62,7 +62,10 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Module</label>
-            <input [(ngModel)]="editModule" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+            <select [(ngModel)]="editModule" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+              <option value="">— select —</option>
+              <option *ngFor="let m of modules" [value]="m">{{ m }}</option>
+            </select>
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Role</label>
@@ -221,13 +224,14 @@ export class MemberDetailComponent implements OnInit {
   editWfh = false;
   editName = '';
   editTeam: TeamName | '' = '';
-  editModule = '';
+  editModule: ModuleName | '' = '';
   editRole: UserRole = 'MEMBER';
   editTeamLeadId: number | null = null;
   teamLeads: MemberSummary[] = [];
   wfhDaysEdit: DayOfWeek[] = [];
   allDays = ALL_DAYS;
-  teams: TeamName[] = ['Frontend', 'Backend', 'Testing', 'Flutter', 'Technical'];
+  teams: TeamName[] = ['Technical'];
+  modules: ModuleName[] = ['Frontend', 'Backend', 'Testing', 'Flutter'];
   openKpiSections = new Set<string>();
   private inlineRatings = new Map<number, number>();
   editingRatingId: number | null = null;

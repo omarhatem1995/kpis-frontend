@@ -37,6 +37,7 @@ export interface DailyLogResponse {
   memberId?: number;
   rating: RatingSummary | null;
   collaborators: CollaboratorRef[];
+  comments: LogComment[];
 }
 
 export interface DailyLogRequest {
@@ -58,7 +59,7 @@ export interface LogComment {
   logId: number;
   authorId: number;
   authorName: string;
-  authorRole: 'MEMBER' | 'MANAGER';
+  authorRole: 'MEMBER' | 'TEAM_LEAD' | 'MANAGER';
   body: string;
   createdAt: string;
 }

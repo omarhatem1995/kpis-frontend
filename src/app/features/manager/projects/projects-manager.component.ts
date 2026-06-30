@@ -195,7 +195,7 @@ export class ProjectsManagerComponent implements OnInit {
         this.saving.set(false);
       },
       error: err => {
-        this.error.set(err.error?.error ?? 'Failed to add project');
+        this.error.set(err.error?.message ?? 'Failed to add project');
         this.saving.set(false);
       }
     });

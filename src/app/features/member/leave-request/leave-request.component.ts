@@ -98,7 +98,7 @@ export class LeaveRequestComponent implements OnInit {
       },
       error: err => {
         this.submitting.set(false);
-        this.formError.set(err?.error?.error ?? 'Failed to submit request.');
+        this.formError.set(err?.error?.message ?? 'Failed to submit request.');
       }
     });
   }

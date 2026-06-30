@@ -64,7 +64,7 @@ interface RatingState { rating: number; comment: string; saving: boolean; }
           </div>
 
           <!-- Comments thread -->
-          <app-log-comments [logId]="log.id" />
+          <app-log-comments [logId]="log.id" [initialComments]="log.comments" [isRated]="false" />
 
           <!-- Rating widget -->
           <div class="border-t border-gray-100 pt-4 mt-3">

@@ -15,7 +15,8 @@ export interface ApiResponsePaging<T> {
 }
 
 export type UserRole = 'MEMBER' | 'TEAM_LEAD' | 'MANAGER';
-export type TeamName = 'Frontend' | 'Backend' | 'Testing' | 'Flutter' | 'Technical';
+export type TeamName = 'Technical';
+export type ModuleName = 'Frontend' | 'Backend' | 'Testing' | 'Flutter';
 export type DayOfWeek = 'SUNDAY' | 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY';
 
 export interface AuthResponse {
@@ -31,7 +32,7 @@ export interface MemberSummary {
   email: string;
   role: UserRole;
   team: TeamName | null;
-  module: string | null;
+  module: ModuleName | null;
   isActive: boolean;
   teamLeadId: number | null;
   logCountThisMonth: number;
@@ -47,7 +48,7 @@ export interface WfhScheduleResponse {
 export interface UpdateMemberRequest {
   name?: string;
   team?: TeamName;
-  module?: string;
+  module?: ModuleName;
   role?: UserRole;
   isActive?: boolean;
   teamLeadId?: number;
@@ -58,7 +59,7 @@ export interface CreateMemberRequest {
   email: string;
   password: string;
   team?: TeamName;
-  module?: string;
+  module?: ModuleName;
   role?: UserRole;
   teamLeadId?: number;
 }

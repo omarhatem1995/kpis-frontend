@@ -301,7 +301,7 @@ export class DailyLogFormComponent implements OnInit {
       next: () => this.router.navigate(['/member/dashboard'], { state: { success: true } }),
       error: err => {
         this.submitting.set(false);
-        this.submitError.set(err?.error?.error ?? 'Failed to save. Please try again.');
+        this.submitError.set(err?.error?.message ?? 'Failed to save. Please try again.');
       }
     });
   }
