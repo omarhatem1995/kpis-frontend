@@ -154,10 +154,13 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
           <p class="text-xs text-gray-500 mb-2">{{ log.projectName }}</p>
           <p class="text-sm text-gray-700 line-clamp-2 mb-3">{{ log.tasksDescription }}</p>
           <div *ngIf="log.rating">
-            <div *ngIf="editingRatingId !== log.id" class="flex items-center gap-2">
-              <app-star-rating [rating]="log.rating.rating" [readonly]="true" />
-              <span *ngIf="log.rating.isAutomated" class="text-xs text-gray-400 italic">(Auto)</span>
-              <button (click)="openEditRating(log)" class="text-xs text-gray-400 hover:text-primary ml-auto">Edit rating</button>
+            <div *ngIf="editingRatingId !== log.id">
+              <div class="flex items-center gap-2">
+                <app-star-rating [rating]="log.rating.rating" [readonly]="true" />
+                <span *ngIf="log.rating.isAutomated" class="text-xs text-gray-400 italic">(Auto)</span>
+                <button (click)="openEditRating(log)" class="text-xs text-gray-400 hover:text-primary ml-auto">Edit rating</button>
+              </div>
+              <p *ngIf="log.rating.comment" class="text-xs text-gray-500 mt-1 italic">"{{ log.rating.comment }}"</p>
             </div>
             <div *ngIf="editingRatingId === log.id" class="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
               <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Edit rating</p>
