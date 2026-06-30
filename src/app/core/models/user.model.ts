@@ -1,3 +1,9 @@
+export interface ApiResponse<T> {
+  data: T;
+  message: string;
+  status: boolean;
+}
+
 export type UserRole = 'MEMBER' | 'TEAM_LEAD' | 'MANAGER';
 export type TeamName = 'Frontend' | 'Backend' | 'Testing' | 'Flutter' | 'Technical';
 export type DayOfWeek = 'SUNDAY' | 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY';

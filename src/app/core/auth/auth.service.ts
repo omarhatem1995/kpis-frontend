@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, DayOfWeek, UserRole } from '../models/user.model';
-import { WfhScheduleResponse } from '../models/user.model';
+import { ApiResponse, AuthResponse, DayOfWeek, UserRole, WfhScheduleResponse } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -51,7 +51,8 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${environment.apiBaseUrl}/auth/login`, { email, password }).pipe(
+    return this.http.post<ApiResponse<AuthResponse>>(`${environment.apiBaseUrl}/auth/login`, { email, password }).pipe(
+      map(r => r.data),
       tap(res => {
         localStorage.setItem(this.TOKEN_KEY, res.token);
         localStorage.setItem(this.USER_KEY, JSON.stringify({ userId: res.userId, name: res.name, role: res.role }));
@@ -60,12 +61,13 @@ export class AuthService {
     );
   }
 
-  requestOtp(email: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${environment.apiBaseUrl}/auth/requestOtp`, { email });
+  requestOtp(email: string): Observable<string> {
+    return this.http.post<ApiResponse<null>>(`${environment.apiBaseUrl}/auth/requestOtp`, { email }).pipe(map(r => r.message));
   }
 
   verifyOtp(email: string, otp: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${environment.apiBaseUrl}/auth/verifyOtp`, { email, otp }).pipe(
+    return this.http.post<ApiResponse<AuthResponse>>(`${environment.apiBaseUrl}/auth/verifyOtp`, { email, otp }).pipe(
+      map(r => r.data),
       tap(res => {
         localStorage.setItem(this.TOKEN_KEY, res.token);
         localStorage.setItem(this.USER_KEY, JSON.stringify({ userId: res.userId, name: res.name, role: res.role }));
@@ -75,7 +77,8 @@ export class AuthService {
   }
 
   loadWfhSchedule(): Observable<WfhScheduleResponse> {
-    return this.http.get<WfhScheduleResponse>(`${environment.apiBaseUrl}/member/wfhSchedule`).pipe(
+    return this.http.get<ApiResponse<WfhScheduleResponse>>(`${environment.apiBaseUrl}/member/wfhSchedule`).pipe(
+      map(r => r.data),
       tap(res => { this.wfhDays = res.days; })
     );
   }
