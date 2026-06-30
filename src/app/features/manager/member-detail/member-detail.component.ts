@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MemberService } from '../../../core/services/member.service';
 import { RatingService } from '../../../core/services/rating.service';
+import { AuthService } from '../../../core/auth/auth.service';
 import { MemberSummary, DayOfWeek, TeamName, UserRole } from '../../../core/models/user.model';
 import { DailyLogResponse } from '../../../core/models/daily-log.model';
 import { KpiReport } from '../../../core/models/kpi-report.model';
@@ -83,8 +84,8 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
           </div>
         </div>
 
-        <!-- Set Password -->
-        <div *ngIf="editProfile" class="mt-4 pt-4 border-t border-gray-100">
+        <!-- Set Password (MANAGER only) -->
+        <div *ngIf="editProfile && isManager" class="mt-4 pt-4 border-t border-gray-100">
           <p class="text-xs font-medium text-gray-600 mb-2">Set / Change Password</p>
           <div class="flex gap-2">
             <input [(ngModel)]="newPassword" type="password" placeholder="New password (min 6 chars)"
@@ -204,6 +205,9 @@ export class MemberDetailComponent implements OnInit {
 
   private readonly memberService = inject(MemberService);
   private readonly ratingService = inject(RatingService);
+  private readonly auth = inject(AuthService);
+
+  get isManager(): boolean { return this.auth.role === 'MANAGER'; }
 
   member = signal<MemberSummary | null>(null);
   logs = signal<DailyLogResponse[]>([]);
@@ -220,7 +224,7 @@ export class MemberDetailComponent implements OnInit {
   teamLeads: MemberSummary[] = [];
   wfhDaysEdit: DayOfWeek[] = [];
   allDays = ALL_DAYS;
-  teams: TeamName[] = ['Frontend', 'Backend', 'Testing', 'Flutter'];
+  teams: TeamName[] = ['Frontend', 'Backend', 'Testing', 'Flutter', 'Technical'];
   openKpiSections = new Set<string>();
   private inlineRatings = new Map<number, number>();
   editingRatingId: number | null = null;

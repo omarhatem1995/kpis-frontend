@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { MemberSummary, UpdateMemberRequest, WfhScheduleResponse, DayOfWeek } from '../models/user.model';
+import { MemberSummary, UpdateMemberRequest, CreateMemberRequest, WfhScheduleResponse, DayOfWeek } from '../models/user.model';
 import { DailyLogResponse } from '../models/daily-log.model';
 import { KpiReport } from '../models/kpi-report.model';
 import { LeaveRequestResponse, LeaveRequestCreate, LeaveReviewRequest } from '../models/leave-request.model';
@@ -31,6 +31,10 @@ export class MemberService {
     return this.http.get<KpiReport>(`${this.base}/manager/members/${userId}/kpi`, {
       params: new HttpParams().set('quarter', quarter)
     });
+  }
+
+  createMember(req: CreateMemberRequest): Observable<MemberSummary> {
+    return this.http.post<MemberSummary>(`${this.base}/manager/members`, req);
   }
 
   updateMember(userId: number, req: UpdateMemberRequest): Observable<MemberSummary> {

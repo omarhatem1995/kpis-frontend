@@ -1,5 +1,5 @@
 export type UserRole = 'MEMBER' | 'TEAM_LEAD' | 'MANAGER';
-export type TeamName = 'Frontend' | 'Backend' | 'Testing' | 'Flutter';
+export type TeamName = 'Frontend' | 'Backend' | 'Testing' | 'Flutter' | 'Technical';
 export type DayOfWeek = 'SUNDAY' | 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY';
 
 export interface AuthResponse {
@@ -34,5 +34,15 @@ export interface UpdateMemberRequest {
   module?: string;
   role?: UserRole;
   isActive?: boolean;
+  teamLeadId?: number;
+}
+
+export interface CreateMemberRequest {
+  name: string;
+  email: string;
+  password: string;
+  team?: TeamName;
+  module?: string;
+  role?: UserRole;
   teamLeadId?: number;
 }
