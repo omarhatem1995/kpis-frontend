@@ -112,6 +112,6 @@ export class ExportComponent implements OnInit {
       for (let q = 4; q >= 1; q--) this.quarters.push({ value: `${y}-Q${q}`, label: `Q${q} ${y}` });
     }
     this.selectedQuarter = `${now.getFullYear()}-Q${Math.ceil((now.getMonth() + 1) / 3)}`;
-    this.memberService.getMembers().subscribe(m => this.members.set(m));
+    this.memberService.getMembers({ size: 200 }).subscribe(res => this.members.set(res.data));
   }
 }

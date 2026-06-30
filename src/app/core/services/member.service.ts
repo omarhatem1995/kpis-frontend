@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ApiResponse, MemberSummary, UpdateMemberRequest, CreateMemberRequest, WfhScheduleResponse, DayOfWeek } from '../models/user.model';
+import { ApiResponse, ApiResponsePaging, MemberSummary, UpdateMemberRequest, CreateMemberRequest, WfhScheduleResponse, DayOfWeek } from '../models/user.model';
 import { DailyLogResponse } from '../models/daily-log.model';
 import { KpiReport } from '../models/kpi-report.model';
 import { LeaveRequestResponse, LeaveRequestCreate, LeaveReviewRequest } from '../models/leave-request.model';
@@ -14,8 +14,13 @@ export class MemberService {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiBaseUrl;
 
-  getMembers(): Observable<MemberSummary[]> {
-    return this.http.get<ApiResponse<MemberSummary[]>>(`${this.base}/manager/members`).pipe(map(r => r.data));
+  getMembers(params?: { team?: string; search?: string; page?: number; size?: number }): Observable<ApiResponsePaging<MemberSummary[]>> {
+    let httpParams = new HttpParams();
+    if (params?.team)   httpParams = httpParams.set('team', params.team);
+    if (params?.search) httpParams = httpParams.set('search', params.search);
+    if (params?.page !== undefined) httpParams = httpParams.set('page', params.page);
+    if (params?.size !== undefined) httpParams = httpParams.set('size', params.size);
+    return this.http.get<ApiResponsePaging<MemberSummary[]>>(`${this.base}/manager/members`, { params: httpParams });
   }
 
   getTeammates(): Observable<MemberSummary[]> {

@@ -4,6 +4,16 @@ export interface ApiResponse<T> {
   status: boolean;
 }
 
+export interface ApiResponsePaging<T> {
+  data: T;
+  message: string;
+  status: boolean;
+  pageSize: number;
+  totalItems: number;
+  nextPage: number;
+  lastPage: boolean;
+}
+
 export type UserRole = 'MEMBER' | 'TEAM_LEAD' | 'MANAGER';
 export type TeamName = 'Frontend' | 'Backend' | 'Testing' | 'Flutter' | 'Technical';
 export type DayOfWeek = 'SUNDAY' | 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY';

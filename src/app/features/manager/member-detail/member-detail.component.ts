@@ -300,7 +300,8 @@ export class MemberDetailComponent implements OnInit {
     const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const quarter = `${now.getFullYear()}-Q${Math.ceil((now.getMonth() + 1) / 3)}`;
 
-    this.memberService.getMembers().subscribe(ms => {
+    this.memberService.getMembers({ size: 200 }).subscribe(res => {
+      const ms = res.data;
       this.teamLeads = ms.filter(m => m.role === 'TEAM_LEAD' || m.role === 'MANAGER');
       const m = ms.find(x => x.userId === uid) ?? null;
       if (m) {
