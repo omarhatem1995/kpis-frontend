@@ -35,7 +35,6 @@ export interface DailyLogResponse {
   location: Location;
   isUnscheduledWfh: boolean;
   submittedAt: string;
-  memberName?: string;
   memberId?: number;
   rating: RatingSummary | null;
   collaborators: CollaboratorRef[];
