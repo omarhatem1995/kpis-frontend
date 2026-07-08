@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LogService } from '../../../core/services/log.service';
+import { AuthService } from '../../../core/auth/auth.service';
 import { DailyLogResponse } from '../../../core/models/daily-log.model';
 import { StarRatingComponent } from '../../../shared/components/star-rating/star-rating.component';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
@@ -42,10 +43,17 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
             </div>
           </div>
 
-          <!-- Activities -->
+          <!-- Owner badge for collab logs -->
+          <div *ngIf="log.userId !== currentUserId" class="mb-2">
+            <span class="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">by {{ log.memberName }}</span>
+          </div>
+
+          <!-- Activities & collaborators -->
           <div class="flex flex-wrap gap-1.5 mb-3">
             <span *ngFor="let a of log.activities"
               class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ a.label }}</span>
+            <span *ngFor="let c of log.collaborators"
+              class="text-xs bg-blue-50 border border-blue-100 text-blue-700 px-2 py-0.5 rounded-full">with {{ c.name }}</span>
           </div>
 
           <!-- Tasks description -->
@@ -69,7 +77,7 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
             <ng-template #awaiting>
               <div class="flex items-center gap-2">
                 <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Awaiting rating</span>
-                <button (click)="editLog(log)"
+                <button *ngIf="log.userId === currentUserId" (click)="editLog(log)"
                   class="text-xs text-primary hover:underline font-medium">Edit</button>
               </div>
             </ng-template>
@@ -89,7 +97,10 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
 })
 export class LogHistoryComponent implements OnInit {
   private readonly logService = inject(LogService);
+  private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+
+  get currentUserId() { return this.auth.userId; }
 
   logs = signal<DailyLogResponse[]>([]);
   loading = signal(true);

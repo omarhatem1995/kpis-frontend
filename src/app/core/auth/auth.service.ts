@@ -5,11 +5,13 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiResponse, AuthResponse, DayOfWeek, UserRole, WfhScheduleResponse } from '../models/user.model';
+import { FcmService } from '../services/fcm.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly fcm = inject(FcmService);
 
   private readonly TOKEN_KEY = 'cic_token';
   private readonly USER_KEY = 'cic_user';
@@ -57,6 +59,7 @@ export class AuthService {
         localStorage.setItem(this.TOKEN_KEY, res.token);
         localStorage.setItem(this.USER_KEY, JSON.stringify({ userId: res.userId, name: res.name, role: res.role }));
         this._role$.next(res.role);
+        this.fcm.requestPermissionAndRegister();
       })
     );
   }
@@ -72,6 +75,7 @@ export class AuthService {
         localStorage.setItem(this.TOKEN_KEY, res.token);
         localStorage.setItem(this.USER_KEY, JSON.stringify({ userId: res.userId, name: res.name, role: res.role }));
         this._role$.next(res.role);
+        this.fcm.requestPermissionAndRegister();
       })
     );
   }

@@ -32,6 +32,10 @@ export class MemberService {
     return this.http.post<ApiResponse<MemberSummary>>(`${this.base}/manager/members`, req).pipe(map(r => r.data));
   }
 
+  getMember(userId: number): Observable<MemberSummary> {
+    return this.http.get<ApiResponse<MemberSummary>>(`${this.base}/manager/members/${userId}`).pipe(map(r => r.data));
+  }
+
   getMemberLogs(userId: number, month: string): Observable<DailyLogResponse[]> {
     return this.http.get<ApiResponse<DailyLogResponse[]>>(`${this.base}/manager/members/${userId}/logs`, {
       params: new HttpParams().set('month', month)
