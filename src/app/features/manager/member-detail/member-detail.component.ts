@@ -305,7 +305,6 @@ export class MemberDetailComponent implements OnInit {
     const uid = +this.id;
     const now = new Date();
     const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const quarter = `${now.getFullYear()}-Q${Math.ceil((now.getMonth() + 1) / 3)}`;
 
     this.memberService.getMember(uid).subscribe(m => {
       this.member.set(m);
@@ -321,7 +320,7 @@ export class MemberDetailComponent implements OnInit {
     this.memberService.getMemberLogs(uid, month).subscribe(logs => {
       this.logs.set([...logs].sort((a, b) => b.logDate.localeCompare(a.logDate)));
     });
-    this.memberService.getMemberKpi(uid, quarter).subscribe(k => {
+    this.memberService.getMemberKpi(uid, month).subscribe(k => {
       this.kpi.set(k);
       this.openKpiSections = new Set(k.sections.map(s => s.key));
     });

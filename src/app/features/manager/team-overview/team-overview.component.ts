@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MemberService } from '../../../core/services/member.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { AdminService } from '../../../core/services/admin.service';
 import { MemberSummary, TeamName, ModuleName, UserRole } from '../../../core/models/user.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { ScorePillComponent } from '../../../shared/components/score-pill/score-pill.component';
@@ -24,13 +25,19 @@ const PAGE_SIZE = 12;
       <!-- Header -->
       <div class="flex items-center justify-between mb-5">
         <h1 class="text-xl font-bold text-gray-900">Team Overview</h1>
-        <button *ngIf="isManager" (click)="showCreate = true"
-          class="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          Add Member
-        </button>
+        <div class="flex items-center gap-2">
+          <button *ngIf="isManager" (click)="showResetConfirm = true"
+            class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm">
+            Reset All Logs
+          </button>
+          <button *ngIf="isManager" (click)="showCreate = true"
+            class="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Member
+          </button>
+        </div>
       </div>
 
       <!-- Stat cards -->
@@ -231,12 +238,38 @@ const PAGE_SIZE = 12;
         </div>
       </div>
     </div>
+
+    <!-- Reset All Logs confirmation modal -->
+    <div *ngIf="showResetConfirm" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 text-center mb-2">Reset All Logs?</h3>
+        <p class="text-sm text-gray-500 text-center mb-6">
+          This will permanently delete ALL logs, ratings, comments, and activities for every team member. This action cannot be undone.
+        </p>
+        <div class="flex gap-3">
+          <button (click)="showResetConfirm = false" [disabled]="resetting"
+            class="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50">
+            Cancel
+          </button>
+          <button (click)="confirmReset()" [disabled]="resetting"
+            class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">
+            {{ resetting ? 'Resetting…' : 'Yes, reset everything' }}
+          </button>
+        </div>
+      </div>
+    </div>
   `
 })
 export class TeamOverviewComponent implements OnInit {
   private readonly memberService = inject(MemberService);
   private readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly adminService = inject(AdminService);
 
   members = signal<MemberSummary[]>([]);
   loading = signal(true);
@@ -346,6 +379,26 @@ export class TeamOverviewComponent implements OnInit {
       error: err => {
         this.createError = err?.error?.message ?? 'Failed to create member.';
         this.creating = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // Reset all logs modal
+  showResetConfirm = false;
+  resetting = false;
+
+  confirmReset(): void {
+    this.resetting = true;
+    this.adminService.resetAllLogs().subscribe({
+      next: () => {
+        this.resetting = false;
+        this.showResetConfirm = false;
+        this.load();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.resetting = false;
         this.cdr.markForCheck();
       }
     });

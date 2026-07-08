@@ -19,7 +19,7 @@ export interface KpiReport {
   memberName: string;
   team: string | null;
   module: string | null;
-  quarter: string;
+  period: string;
   startDate: string;
   endDate: string;
   totalScore: number;

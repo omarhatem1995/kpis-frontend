@@ -15,9 +15,9 @@ import { KpiProgressBarComponent } from '../../../shared/components/kpi-progress
     <div>
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-lg font-semibold text-gray-900">KPI Score</h2>
-        <select [(ngModel)]="selectedQuarter" (ngModelChange)="loadKpi()"
+        <select [(ngModel)]="selectedPeriod" (ngModelChange)="loadKpi()"
           class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-          <option *ngFor="let q of quarters" [value]="q.value">{{ q.label }}</option>
+          <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
         </select>
       </div>
 
@@ -78,21 +78,21 @@ import { KpiProgressBarComponent } from '../../../shared/components/kpi-progress
 export class KpiViewComponent implements OnInit {
   private readonly logService = inject(LogService);
 
+  private readonly MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
   report = signal<KpiReport | null>(null);
   openSections = new Set<string>();
-  selectedQuarter: string;
-  quarters: { value: string; label: string }[] = [];
+  selectedPeriod: string;
+  months: { value: string; label: string }[] = [];
 
   constructor() {
     const now = new Date();
-    const year = now.getFullYear();
-    for (let y = year; y >= year - 1; y--) {
-      for (let q = 4; q >= 1; q--) {
-        this.quarters.push({ value: `${y}-Q${q}`, label: `Q${q} ${y}` });
-      }
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      this.months.push({ value, label: `${this.MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}` });
     }
-    const currentQ = Math.ceil((now.getMonth() + 1) / 3);
-    this.selectedQuarter = `${now.getFullYear()}-Q${currentQ}`;
+    this.selectedPeriod = this.months[0].value;
   }
 
   get scoreColour(): string {
@@ -108,7 +108,7 @@ export class KpiViewComponent implements OnInit {
 
   loadKpi(): void {
     this.report.set(null);
-    this.logService.getMyKpi(this.selectedQuarter).subscribe(r => {
+    this.logService.getMyKpi(this.selectedPeriod).subscribe(r => {
       this.report.set(r);
       this.openSections = new Set(r.sections.map(s => s.key));
     });
