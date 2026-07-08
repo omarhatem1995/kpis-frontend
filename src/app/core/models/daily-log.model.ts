@@ -22,6 +22,8 @@ export interface RatingSummary {
 
 export interface DailyLogResponse {
   id: number;
+  userId: number;
+  memberName: string;
   logDate: string;
   projectId: number | null;
   projectName: string | null;

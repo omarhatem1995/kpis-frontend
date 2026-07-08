@@ -65,19 +65,25 @@ import { KpiReport } from '../../../core/models/kpi-report.model';
           <div *ngFor="let log of todayLogs()"
             class="flex items-start justify-between gap-3 bg-gray-50 rounded-lg p-3 border border-gray-100">
             <div class="flex-1 min-w-0">
-              <p class="text-xs font-medium text-gray-700 truncate">{{ log.projectName ?? 'No project' }}</p>
+              <div class="flex items-center gap-2 mb-0.5">
+                <p class="text-xs font-medium text-gray-700 truncate">{{ log.projectName ?? 'No project' }}</p>
+                <span *ngIf="log.userId !== currentUserId" class="text-xs text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full shrink-0">by {{ log.memberName }}</span>
+              </div>
               <p class="text-xs text-gray-500 line-clamp-2 mt-0.5">{{ log.tasksDescription }}</p>
               <div class="flex gap-1 mt-1 flex-wrap">
                 <span *ngFor="let a of log.activities" class="text-xs bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded">{{ a.label }}</span>
+                <span *ngFor="let c of log.collaborators" class="text-xs bg-blue-50 border border-blue-100 text-blue-700 px-1.5 py-0.5 rounded">with {{ c.name }}</span>
               </div>
             </div>
             <div class="flex flex-col items-end gap-1 shrink-0">
               @if (log.rating) {
                 <span class="text-amber-400 text-xs">{{ starStr(log.rating.rating) }}</span>
                 <span class="text-xs text-gray-400 italic">Rated</span>
-              } @else {
+              } @else if (log.userId === currentUserId) {
                 <button (click)="editTask(log)"
                   class="text-xs text-primary hover:underline font-medium">Edit</button>
+                <span class="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">Pending</span>
+              } @else {
                 <span class="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">Pending</span>
               }
             </div>
@@ -113,6 +119,7 @@ export class DashboardComponent implements OnInit {
   kpi        = signal<KpiReport | null>(null);
   loading    = signal(true);
 
+  get currentUserId() { return this.auth.userId; }
   get firstName() { return (this.auth.userName ?? '').split(' ')[0]; }
   get today() { return new Date().toLocaleDateString('en-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
   get greeting() { const h = new Date().getHours(); return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'; }
