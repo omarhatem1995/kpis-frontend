@@ -44,16 +44,20 @@ const SELF_LEARNING_LABELS: Record<SelfLearning, string> = {
 
       <!-- Step 1: Project -->
       <div *ngIf="step() === 0">
-        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Step 1 — Project</p>
+        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          Step 1 — Project <span class="text-danger normal-case font-normal">* required</span>
+        </p>
         <div class="relative">
           <input
             [(ngModel)]="projectSearch"
             (ngModelChange)="onProjectSearch()"
             (focus)="showDropdown.set(true)"
-            (blur)="showDropdown.set(false)"
-            placeholder="Search projects…"
+            (blur)="onProjectBlur()"
+            placeholder="Search and select a project…"
             autocomplete="off"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            [class.border-gray-300]="form.projectId || !projectTouched"
+            [class.border-danger]="!form.projectId && projectTouched"
           />
           @if (form.projectId) {
             <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-primary font-medium">✓ selected</span>
@@ -78,6 +82,9 @@ const SELF_LEARNING_LABELS: Record<SelfLearning, string> = {
         </div>
         @if (form.projectId) {
           <p class="mt-1.5 text-xs text-gray-500">Selected: <span class="font-medium text-gray-700">{{ selectedProjectName() }}</span></p>
+        }
+        @if (!form.projectId && projectTouched) {
+          <p class="mt-1.5 text-xs text-danger">Please select a project before continuing.</p>
         }
       </div>
 
@@ -197,6 +204,7 @@ export class DailyLogFormComponent implements OnInit {
   showDropdown = signal(false);
   filteredProjects = signal<ProjectItem[]>([]);
   projectSearch = '';
+  projectTouched = false;
 
   form = {
     projectId: null as number | null,
@@ -222,6 +230,11 @@ export class DailyLogFormComponent implements OnInit {
     this.filteredProjects.set(this.projects().filter(p => p.name.toLowerCase().includes(q)));
     this.showDropdown.set(true);
     if (!q) this.form.projectId = null;
+  }
+
+  onProjectBlur(): void {
+    this.projectTouched = true;
+    this.showDropdown.set(false);
   }
 
   selectProject(p: ProjectItem): void {
