@@ -490,8 +490,8 @@ export class TeamOverviewComponent implements OnInit {
 
   ngOnInit(): void {
     this.load(true);
-    this.memberService.getMembers({ size: 200 }).subscribe(res => {
-      this.allLeads = res.data.filter(m => m.role === 'TEAM_LEAD' || m.role === 'MANAGER');
+    this.memberService.getLeads().subscribe(leads => {
+      this.allLeads = leads;
       this.cdr.markForCheck();
     });
   }

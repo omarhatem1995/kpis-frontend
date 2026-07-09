@@ -52,6 +52,10 @@ export class MemberService {
     return this.http.patch<ApiResponse<MemberSummary>>(`${this.base}/manager/members/${userId}`, req).pipe(map(r => r.data));
   }
 
+  getLeads(): Observable<MemberSummary[]> {
+    return this.http.get<ApiResponse<MemberSummary[]>>(`${this.base}/manager/members/leads`).pipe(map(r => r.data));
+  }
+
   deleteMember(userId: number): Observable<void> {
     return this.http.delete<ApiResponse<void>>(`${this.base}/manager/members/${userId}`).pipe(map(r => r.data));
   }

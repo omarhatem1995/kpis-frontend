@@ -367,9 +367,9 @@ export class MemberDetailComponent implements OnInit {
 
     forkJoin({
       member: this.memberService.getMember(uid),
-      leads: this.memberService.getMembers({ size: 200 })
+      leads: this.memberService.getLeads()
     }).subscribe(({ member: m, leads }) => {
-      this.teamLeads = leads.data.filter(x => x.role === 'TEAM_LEAD' || x.role === 'MANAGER');
+      this.teamLeads = leads;
       this.teamLeadsLoading = false;
       this.member.set(m);
       this.editName = m.name;
