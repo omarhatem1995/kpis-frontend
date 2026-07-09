@@ -99,6 +99,10 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
               Set password
             </button>
           </div>
+          <label class="flex items-center gap-2 mt-2 cursor-pointer">
+            <input type="checkbox" [(ngModel)]="notifyWithPassword" class="accent-primary" />
+            <span class="text-xs text-gray-600">Send password to member via in-app notification</span>
+          </label>
           <p *ngIf="passwordSaved()" class="text-xs text-green-600 mt-1">Password updated.</p>
         </div>
       </div>
@@ -238,6 +242,7 @@ export class MemberDetailComponent implements OnInit {
   editRatingValue = 0;
   editRatingComment = '';
   newPassword = '';
+  notifyWithPassword = false;
   passwordSaved = signal(false);
 
   inlineRating(id: number): number { return this.inlineRatings.get(id) ?? 0; }
@@ -254,8 +259,9 @@ export class MemberDetailComponent implements OnInit {
   }
 
   savePassword(): void {
-    this.memberService.setMemberPassword(+this.id, this.newPassword).subscribe(() => {
+    this.memberService.setMemberPassword(+this.id, this.newPassword, this.notifyWithPassword).subscribe(() => {
       this.newPassword = '';
+      this.notifyWithPassword = false;
       this.passwordSaved.set(true);
       setTimeout(() => this.passwordSaved.set(false), 3000);
     });

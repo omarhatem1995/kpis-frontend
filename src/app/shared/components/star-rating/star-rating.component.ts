@@ -1,6 +1,6 @@
 /**
- * 1–5 star rating selector. Emits ratingChange when user selects a star.
- * Pass [readonly]=true to show stars without interaction.
+ * 1–10 rating selector. Emits ratingChange when user selects a value.
+ * Pass [readonly]=true to show without interaction.
  */
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -11,21 +11,23 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex gap-1" [class.cursor-default]="readonly">
+    <div class="flex flex-wrap gap-1" [class.cursor-default]="readonly">
       <button
-        *ngFor="let star of stars"
+        *ngFor="let n of stars"
         type="button"
-        class="text-2xl transition-transform"
+        class="w-8 h-8 rounded-lg text-sm font-semibold transition-colors"
         [class.cursor-pointer]="!readonly"
         [class.cursor-default]="readonly"
-        [class.hover:scale-110]="!readonly"
-        (click)="!readonly && select(star)"
-        (mouseenter)="!readonly && (hovered = star)"
+        [class.bg-amber-400]="n <= (hovered || rating)"
+        [class.text-white]="n <= (hovered || rating)"
+        [class.bg-gray-100]="n > (hovered || rating)"
+        [class.text-gray-500]="n > (hovered || rating)"
+        (click)="!readonly && select(n)"
+        (mouseenter)="!readonly && (hovered = n)"
         (mouseleave)="!readonly && (hovered = 0)"
-      >
-        <span [class.text-amber-400]="star <= (hovered || rating)" [class.text-gray-300]="star > (hovered || rating)">★</span>
-      </button>
+      >{{ n }}</button>
     </div>
+    <p *ngIf="!readonly && rating > 0" class="text-xs text-gray-500 mt-1">Selected: {{ rating }}/10</p>
   `
 })
 export class StarRatingComponent {
@@ -33,11 +35,11 @@ export class StarRatingComponent {
   @Input() readonly = false;
   @Output() ratingChange = new EventEmitter<number>();
 
-  stars = [1, 2, 3, 4, 5];
+  stars = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   hovered = 0;
 
-  select(star: number): void {
-    this.rating = star;
-    this.ratingChange.emit(star);
+  select(n: number): void {
+    this.rating = n;
+    this.ratingChange.emit(n);
   }
 }

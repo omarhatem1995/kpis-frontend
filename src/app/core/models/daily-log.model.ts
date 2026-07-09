@@ -41,6 +41,25 @@ export interface DailyLogResponse {
   comments: LogComment[];
 }
 
+export interface PendingRatingDto {
+  memberId: number;
+  memberName: string;
+  logDate: string;
+  logs: DailyLogResponse[];
+}
+
+export interface DailyRatingResponse {
+  id: number;
+  memberId: number;
+  memberName: string;
+  logDate: string;
+  managerId: number;
+  rating: number;
+  comment: string | null;
+  isAutomated: boolean;
+  ratedAt: string;
+}
+
 export interface DailyLogRequest {
   logDate: string;
   projectId: number | null;

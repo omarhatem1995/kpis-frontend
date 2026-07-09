@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { MemberService } from '../../../core/services/member.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AdminService } from '../../../core/services/admin.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { MemberSummary, TeamName, ModuleName, UserRole } from '../../../core/models/user.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { ScorePillComponent } from '../../../shared/components/score-pill/score-pill.component';
@@ -26,6 +27,10 @@ const PAGE_SIZE = 12;
       <div class="flex items-center justify-between mb-5">
         <h1 class="text-xl font-bold text-gray-900">Team Overview</h1>
         <div class="flex items-center gap-2">
+          <button (click)="showBroadcast = true"
+            class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm">
+            Send Notification
+          </button>
           <button *ngIf="isManager" (click)="showResetConfirm = true"
             class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm">
             Reset All Logs
@@ -239,6 +244,44 @@ const PAGE_SIZE = 12;
       </div>
     </div>
 
+    <!-- Broadcast notification modal -->
+    <div *ngIf="showBroadcast" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Send Notification</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Recipient</label>
+            <select [(ngModel)]="broadcastTargetId"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+              <option [ngValue]="null">Everyone</option>
+              <option *ngFor="let m of members()" [ngValue]="m.id">{{ m.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Title</label>
+            <input [(ngModel)]="broadcastTitle" maxlength="200" placeholder="Notification title"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Message</label>
+            <textarea [(ngModel)]="broadcastBody" maxlength="500" rows="3" placeholder="Write your message…"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"></textarea>
+          </div>
+          <p *ngIf="broadcastError" class="text-xs text-red-600">{{ broadcastError }}</p>
+        </div>
+        <div class="flex gap-3 mt-5">
+          <button (click)="submitBroadcast()" [disabled]="broadcasting || !broadcastTitle.trim() || !broadcastBody.trim()"
+            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50">
+            {{ broadcasting ? 'Sending…' : 'Send' }}
+          </button>
+          <button (click)="closeBroadcast()"
+            class="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Reset All Logs confirmation modal -->
     <div *ngIf="showResetConfirm" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
@@ -270,6 +313,7 @@ export class TeamOverviewComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly adminService = inject(AdminService);
+  private readonly notificationService = inject(NotificationService);
 
   members = signal<MemberSummary[]>([]);
   loading = signal(true);
@@ -381,6 +425,36 @@ export class TeamOverviewComponent implements OnInit {
         this.creating = false;
         this.cdr.markForCheck();
       }
+    });
+  }
+
+  // Broadcast notification modal
+  showBroadcast = false;
+  broadcastTargetId: number | null = null;
+  broadcastTitle = '';
+  broadcastBody = '';
+  broadcastError = '';
+  broadcasting = false;
+
+  closeBroadcast(): void {
+    this.showBroadcast = false;
+    this.broadcastTitle = '';
+    this.broadcastBody = '';
+    this.broadcastError = '';
+    this.broadcastTargetId = null;
+  }
+
+  submitBroadcast(): void {
+    if (!this.broadcastTitle.trim() || !this.broadcastBody.trim()) return;
+    this.broadcasting = true;
+    this.broadcastError = '';
+    this.notificationService.broadcast({
+      targetUserId: this.broadcastTargetId ?? undefined,
+      title: this.broadcastTitle.trim(),
+      body: this.broadcastBody.trim()
+    }).subscribe({
+      next: () => { this.broadcasting = false; this.closeBroadcast(); this.cdr.markForCheck(); },
+      error: () => { this.broadcastError = 'Failed to send notification.'; this.broadcasting = false; this.cdr.markForCheck(); }
     });
   }
 
