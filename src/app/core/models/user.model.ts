@@ -47,6 +47,7 @@ export interface WfhScheduleResponse {
 
 export interface UpdateMemberRequest {
   name?: string;
+  email?: string;
   team?: TeamName;
   module?: ModuleName;
   role?: UserRole;

@@ -54,6 +54,10 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
             <input [(ngModel)]="editName" type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Email</label>
+            <input [(ngModel)]="editEmail" type="email" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Team</label>
             <select [(ngModel)]="editTeam" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
               <option value="">— select —</option>
@@ -233,6 +237,7 @@ export class MemberDetailComponent implements OnInit {
   editProfile = false;
   editWfh = false;
   editName = '';
+  editEmail = '';
   editTeam: TeamName | '' = '';
   editModule: ModuleName | '' = '';
   editRole: UserRole = 'MEMBER';
@@ -280,6 +285,7 @@ export class MemberDetailComponent implements OnInit {
     const uid = +this.id;
     this.memberService.updateMember(uid, {
       name: this.editName || undefined,
+      email: this.editEmail || undefined,
       team: (this.editTeam as TeamName) || undefined,
       module: this.editModule || undefined,
       role: this.editRole,
@@ -326,6 +332,7 @@ export class MemberDetailComponent implements OnInit {
     this.memberService.getMember(uid).subscribe(m => {
       this.member.set(m);
       this.editName = m.name;
+      this.editEmail = m.email;
       this.editTeam = m.team ?? '';
       this.editModule = m.module ?? '';
       this.editRole = m.role;
