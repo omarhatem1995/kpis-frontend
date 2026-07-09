@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { MemberService } from '../../../core/services/member.service';
 import { RatingService } from '../../../core/services/rating.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -329,7 +330,12 @@ export class MemberDetailComponent implements OnInit {
     const now = new Date();
     const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-    this.memberService.getMember(uid).subscribe(m => {
+    forkJoin({
+      member: this.memberService.getMember(uid),
+      leads: this.memberService.getMembers({ size: 200 })
+    }).subscribe(({ member: m, leads }) => {
+      this.teamLeads = leads.data.filter(x => x.role === 'TEAM_LEAD' || x.role === 'MANAGER');
+      this.teamLeadsLoading = false;
       this.member.set(m);
       this.editName = m.name;
       this.editEmail = m.email;
@@ -337,10 +343,6 @@ export class MemberDetailComponent implements OnInit {
       this.editModule = m.module ?? '';
       this.editRole = m.role;
       this.editTeamLeadId = m.teamLeadId;
-    });
-    this.memberService.getMembers({ size: 200 }).subscribe(res => {
-      this.teamLeads = res.data.filter(m => m.role === 'TEAM_LEAD' || m.role === 'MANAGER');
-      this.teamLeadsLoading = false;
     });
     this.memberService.getMemberLogs(uid, month).subscribe(logs => {
       this.logs.set([...logs].sort((a, b) => b.logDate.localeCompare(a.logDate)));
