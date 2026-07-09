@@ -77,8 +77,8 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Team Lead</label>
-            <select [(ngModel)]="editTeamLeadId" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-              <option [ngValue]="null">— none —</option>
+            <select [(ngModel)]="editTeamLeadId" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" [disabled]="teamLeadsLoading">
+              <option [ngValue]="null">{{ teamLeadsLoading ? 'Loading…' : '— none —' }}</option>
               <option *ngFor="let lead of teamLeads" [ngValue]="lead.userId">{{ lead.name }}</option>
             </select>
           </div>
@@ -232,6 +232,7 @@ export class MemberDetailComponent implements OnInit {
   editRole: UserRole = 'MEMBER';
   editTeamLeadId: number | null = null;
   teamLeads: MemberSummary[] = [];
+  teamLeadsLoading = true;
   wfhDaysEdit: DayOfWeek[] = [];
   allDays = ALL_DAYS;
   teams: TeamName[] = ['TECHNICAL'];
@@ -324,6 +325,7 @@ export class MemberDetailComponent implements OnInit {
     });
     this.memberService.getMembers({ size: 200 }).subscribe(res => {
       this.teamLeads = res.data.filter(m => m.role === 'TEAM_LEAD' || m.role === 'MANAGER');
+      this.teamLeadsLoading = false;
     });
     this.memberService.getMemberLogs(uid, month).subscribe(logs => {
       this.logs.set([...logs].sort((a, b) => b.logDate.localeCompare(a.logDate)));
