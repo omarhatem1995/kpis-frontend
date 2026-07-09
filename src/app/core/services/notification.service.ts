@@ -13,36 +13,36 @@ export class NotificationService {
 
   list(page = 0, size = 20): Observable<ApiResponsePaging<AppNotification[]>> {
     return this.http.get<ApiResponsePaging<AppNotification[]>>(
-      `${this.base}/api/v1/member/notifications`, { params: { page, size } }
+      `${this.base}/member/notifications`, { params: { page, size } }
     );
   }
 
   unreadCount(): Observable<number> {
-    return this.http.get<ApiResponse<number>>(`${this.base}/api/v1/member/notifications/unreadCount`)
+    return this.http.get<ApiResponse<number>>(`${this.base}/member/notifications/unreadCount`)
       .pipe(map(r => r.data));
   }
 
   markSeen(id: number): Observable<AppNotification> {
     return this.http.patch<ApiResponse<AppNotification>>(
-      `${this.base}/api/v1/member/notifications/${id}/seen`, {}
+      `${this.base}/member/notifications/${id}/seen`, {}
     ).pipe(map(r => r.data));
   }
 
   markClicked(id: number): Observable<AppNotification> {
     return this.http.patch<ApiResponse<AppNotification>>(
-      `${this.base}/api/v1/member/notifications/${id}/clicked`, {}
+      `${this.base}/member/notifications/${id}/clicked`, {}
     ).pipe(map(r => r.data));
   }
 
   markAllSeen(): Observable<void> {
     return this.http.patch<ApiResponse<void>>(
-      `${this.base}/api/v1/member/notifications/markAllSeen`, {}
+      `${this.base}/member/notifications/markAllSeen`, {}
     ).pipe(map(() => void 0));
   }
 
   broadcast(req: BroadcastRequest): Observable<void> {
     return this.http.post<ApiResponse<void>>(
-      `${this.base}/api/v1/manager/notifications/broadcast`, req
+      `${this.base}/manager/notifications/broadcast`, req
     ).pipe(map(() => void 0));
   }
 }
