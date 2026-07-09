@@ -123,8 +123,17 @@ const PAGE_SIZE = 12;
         <div *ngIf="members().length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
           <a *ngFor="let m of members()"
             [routerLink]="['/manager/member', m.userId]"
-            class="bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-shadow p-4 flex items-center gap-3">
-            <app-avatar [name]="m.name" size="md" />
+            class="bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-shadow p-4 flex items-center gap-3 relative overflow-hidden"
+            [class.border-l-4]="m.unratedCount > 0"
+            [class.border-amber-400]="m.unratedCount > 0">
+            <!-- Unrated pulse dot on avatar -->
+            <div class="relative shrink-0">
+              <app-avatar [name]="m.name" size="md" />
+              <span *ngIf="m.unratedCount > 0"
+                class="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center text-white text-[9px] font-bold ring-2 ring-white">
+                {{ m.unratedCount > 9 ? '9+' : m.unratedCount }}
+              </span>
+            </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-2">
                 <p class="text-sm font-semibold text-gray-900 truncate">{{ m.name }}</p>
@@ -133,8 +142,8 @@ const PAGE_SIZE = 12;
               <p class="text-xs text-gray-400 mt-0.5">{{ m.module ?? '—' }}</p>
               <div class="flex items-center gap-2 mt-1.5">
                 <span *ngIf="m.unratedCount > 0"
-                  class="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium border border-amber-100">
-                  {{ m.unratedCount }} to rate
+                  class="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-semibold border border-amber-200">
+                  ⏳ {{ m.unratedCount }} unrated {{ m.unratedCount === 1 ? 'day' : 'days' }}
                 </span>
                 <span class="text-xs text-gray-300">{{ m.logCountThisMonth }} logs</span>
               </div>

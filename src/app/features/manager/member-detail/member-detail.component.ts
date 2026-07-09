@@ -359,6 +359,8 @@ export class MemberDetailComponent implements OnInit {
     this.ratingService.updateRating(log.rating.id, this.editRatingValue, this.editRatingComment).subscribe(r => {
       this.logs.update(ls => ls.map(l => l.id === log.id ? { ...l, rating: r } : l));
       this.editingRatingId = null;
+      // Reload member summary so KPI score and Avg rating refresh immediately
+      this.memberService.getMember(log.userId).subscribe(m => this.member.set(m));
     });
   }
 
