@@ -254,7 +254,7 @@ const PAGE_SIZE = 12;
             <select [(ngModel)]="broadcastTargetId"
               class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
               <option [ngValue]="null">Everyone</option>
-              <option *ngFor="let m of members()" [ngValue]="m.id">{{ m.name }}</option>
+              <option *ngFor="let m of members()" [ngValue]="m.userId">{{ m.name }}</option>
             </select>
           </div>
           <div>

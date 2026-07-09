@@ -287,8 +287,10 @@ export class MemberDetailComponent implements OnInit {
 
   quickRate(log: DailyLogResponse): void {
     const rating = this.inlineRating(log.id);
-    this.ratingService.submitRating(log.id, rating, '').subscribe(r => {
-      this.logs.update(ls => ls.map(l => l.id === log.id ? { ...l, rating: r } : l));
+    this.ratingService.submitRating(log.userId, log.logDate, rating, '').subscribe(() => {
+      this.logs.update(ls => ls.map(l => l.userId === log.userId && l.logDate === log.logDate
+        ? { ...l, rating: { id: 0, rating, comment: null, ratedAt: new Date().toISOString(), isAutomated: false } }
+        : l));
     });
   }
 
