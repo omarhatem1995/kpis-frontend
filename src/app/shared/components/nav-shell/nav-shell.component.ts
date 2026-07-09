@@ -1,8 +1,9 @@
 import { Component, inject, signal, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { MemberService } from '../../../core/services/member.service';
 import { AppNotification } from '../../../core/models/notification.model';
 import { AvatarComponent } from '../avatar/avatar.component';
 
@@ -157,6 +158,8 @@ const TYPE_ICON: Record<string, string> = {
 export class NavShellComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly notifService = inject(NotificationService);
+  private readonly memberService = inject(MemberService);
+  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
   notifications = signal<AppNotification[]>([]);
@@ -216,12 +219,49 @@ export class NavShellComponent implements OnInit {
   }
 
   onNotifClick(n: AppNotification): void {
+    this.showNotifPanel = false;
     if (!n.seen) {
       this.notifService.markClicked(n.id).subscribe(updated => {
         this.notifications.update(list => list.map(x => x.id === updated.id ? updated : x));
         this.unread.update(c => Math.max(0, c - 1));
         this.cdr.markForCheck();
       });
+    }
+    this.navigateForNotif(n);
+  }
+
+  private navigateForNotif(n: AppNotification): void {
+    const isManager = this.role === 'MANAGER' || this.role === 'TEAM_LEAD';
+    switch (n.type) {
+      case 'LEAVE_REQUEST':
+        this.router.navigate([isManager ? '/manager/leave' : '/member/leave']);
+        break;
+      case 'WFH_REQUEST':
+        this.router.navigate([isManager ? '/manager/wfh' : '/member/history']);
+        break;
+      case 'RATING_WARNING':
+        this.router.navigate(['/member/kpi']);
+        break;
+      case 'TASK_RATING_SUBMITTED':
+        this.router.navigate(['/member/history']);
+        break;
+      case 'PASSWORD_CHANGE':
+        this.router.navigate([isManager ? '/manager/changePassword' : '/member/changePassword']);
+        break;
+      case 'TASK_COMMENT':
+      case 'TASK_MENTION':
+      case 'TASK_COLLABORATION':
+        if (!isManager) {
+          this.router.navigate(['/member/history']);
+        } else if (n.referenceId) {
+          // Fetch the log to get the member's userId, then navigate to their detail page
+          this.memberService.getLog(n.referenceId).subscribe(log => {
+            this.router.navigate(['/manager/member', log.userId]);
+          });
+        }
+        break;
+      default:
+        break;
     }
   }
 

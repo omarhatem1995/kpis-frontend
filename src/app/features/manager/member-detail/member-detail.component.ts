@@ -342,6 +342,8 @@ export class MemberDetailComponent implements OnInit {
       this.logs.update(ls => ls.map(l => l.userId === log.userId && l.logDate === log.logDate
         ? { ...l, rating: { id: 0, rating, comment: null, ratedAt: new Date().toISOString(), isAutomated: false } }
         : l));
+      // Reload member summary so Avg rating, Unrated count, and KPI score refresh
+      this.memberService.getMember(log.userId).subscribe(m => this.member.set(m));
     });
   }
 
