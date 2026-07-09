@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@ang
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RatingService } from '../../../core/services/rating.service';
-import { PendingRatingDto } from '../../../core/models/daily-log.model';
+import { PendingRatingDto, CollaboratorRef } from '../../../core/models/daily-log.model';
 import { StarRatingComponent } from '../../../shared/components/star-rating/star-rating.component';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { LogCommentsComponent } from '../../../shared/components/log-comments/log-comments.component';
@@ -63,7 +63,10 @@ interface RatingState { rating: number; comment: string; saving: boolean; }
 
                 <div class="flex flex-wrap gap-2">
                   <span *ngIf="log.selfLearning !== 'NONE'" class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">📚 {{ log.selfLearning }}</span>
-                  <span *ngFor="let c of log.collaborators" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">👥 {{ c.name }}</span>
+                  <!-- When the rated member is a collaborator on someone else's log, show the owner -->
+                  <span *ngIf="log.userId !== item.memberId" class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">🧑‍💻 {{ log.memberName }}'s task</span>
+                  <!-- Show other collaborators, excluding the person being rated -->
+                  <span *ngFor="let c of otherCollabs(log.collaborators, item.memberId)" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">👥 {{ c.name }}</span>
                 </div>
 
                 <app-log-comments [logId]="log.id" [initialComments]="log.comments" [isRated]="false" />
@@ -116,6 +119,10 @@ export class PendingRatingsComponent implements OnInit {
       next: () => this.pending.update(ls => ls.filter(p => !(p.memberId === item.memberId && p.logDate === item.logDate))),
       error: () => { state.saving = false; }
     });
+  }
+
+  otherCollabs(collabs: CollaboratorRef[] | null | undefined, memberId: number): CollaboratorRef[] {
+    return (collabs ?? []).filter(c => c.userId !== memberId);
   }
 
   ngOnInit(): void {
