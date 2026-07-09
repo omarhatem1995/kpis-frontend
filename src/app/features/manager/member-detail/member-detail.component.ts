@@ -91,8 +91,14 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
         <div *ngIf="editProfile && isManager" class="mt-4 pt-4 border-t border-gray-100">
           <p class="text-xs font-medium text-gray-600 mb-2">Set / Change Password</p>
           <div class="flex gap-2">
-            <input [(ngModel)]="newPassword" type="password" placeholder="New password (min 6 chars)"
-              class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+            <div class="relative flex-1">
+              <input [(ngModel)]="newPassword" [type]="showPassword ? 'text' : 'password'" placeholder="New password (min 6 chars)"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+              <button type="button" (click)="showPassword = !showPassword"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">
+                {{ showPassword ? 'Hide' : 'Show' }}
+              </button>
+            </div>
             <button (click)="savePassword()"
               [disabled]="newPassword.length < 6"
               class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 disabled:opacity-50">
@@ -243,6 +249,7 @@ export class MemberDetailComponent implements OnInit {
   editRatingValue = 0;
   editRatingComment = '';
   newPassword = '';
+  showPassword = false;
   notifyWithPassword = false;
   passwordSaved = signal(false);
 
@@ -262,6 +269,7 @@ export class MemberDetailComponent implements OnInit {
   savePassword(): void {
     this.memberService.setMemberPassword(+this.id, this.newPassword, this.notifyWithPassword).subscribe(() => {
       this.newPassword = '';
+      this.showPassword = false;
       this.notifyWithPassword = false;
       this.passwordSaved.set(true);
       setTimeout(() => this.passwordSaved.set(false), 3000);
