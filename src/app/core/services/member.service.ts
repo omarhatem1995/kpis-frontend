@@ -52,6 +52,10 @@ export class MemberService {
     return this.http.patch<ApiResponse<MemberSummary>>(`${this.base}/manager/members/${userId}`, req).pipe(map(r => r.data));
   }
 
+  deleteMember(userId: number): Observable<void> {
+    return this.http.delete<ApiResponse<void>>(`${this.base}/manager/members/${userId}`).pipe(map(r => r.data));
+  }
+
   setMemberPassword(userId: number, password: string, notifyWithPassword = false): Observable<void> {
     return this.http.put<ApiResponse<void>>(`${this.base}/manager/members/${userId}/password`, { password, notifyWithPassword }).pipe(map(r => r.data));
   }

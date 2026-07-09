@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { MemberService } from '../../../core/services/member.service';
 import { RatingService } from '../../../core/services/rating.service';
@@ -33,10 +34,16 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
                 <p class="text-sm text-gray-500">{{ member()!.team ?? 'No team' }} · {{ member()!.module ?? '—' }}</p>
                 <p class="text-xs text-gray-400">{{ member()!.email }}</p>
               </div>
-              <button (click)="editProfile = !editProfile"
-                class="text-sm border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50">
-                {{ editProfile ? 'Cancel' : 'Edit profile' }}
-              </button>
+              <div class="flex gap-2">
+                <button (click)="editProfile = !editProfile"
+                  class="text-sm border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50">
+                  {{ editProfile ? 'Cancel' : 'Edit profile' }}
+                </button>
+                <button *ngIf="isManager" (click)="showDeleteConfirm = true"
+                  class="text-sm border border-red-300 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-50">
+                  Delete
+                </button>
+              </div>
             </div>
 
             <!-- Unassigned banner -->
@@ -219,6 +226,23 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
         </div>
       </div>
     </div>
+
+    <!-- Delete confirmation modal -->
+    <div *ngIf="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <h3 class="text-base font-semibold text-gray-900 mb-2">Delete member?</h3>
+        <p class="text-sm text-gray-500 mb-5">
+          <strong>{{ member()!.name }}</strong> will be permanently deleted if they have no logs, or deactivated and hidden if they do.
+        </p>
+        <div class="flex gap-3 justify-end">
+          <button (click)="showDeleteConfirm = false" class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+          <button (click)="deleteMember()" [disabled]="deleting"
+            class="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+            {{ deleting ? 'Deleting…' : 'Yes, delete' }}
+          </button>
+        </div>
+      </div>
+    </div>
   `
 })
 export class MemberDetailComponent implements OnInit {
@@ -226,6 +250,7 @@ export class MemberDetailComponent implements OnInit {
 
   private readonly memberService = inject(MemberService);
   private readonly ratingService = inject(RatingService);
+  private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
 
   get isManager(): boolean { return this.auth.role === 'MANAGER'; }
@@ -235,6 +260,8 @@ export class MemberDetailComponent implements OnInit {
   kpi = signal<KpiReport | null>(null);
   wfhDays = signal<DayOfWeek[]>([]);
 
+  showDeleteConfirm = false;
+  deleting = false;
   editProfile = false;
   editWfh = false;
   editName = '';
@@ -279,6 +306,14 @@ export class MemberDetailComponent implements OnInit {
       this.notifyWithPassword = false;
       this.passwordSaved.set(true);
       setTimeout(() => this.passwordSaved.set(false), 3000);
+    });
+  }
+
+  deleteMember(): void {
+    this.deleting = true;
+    this.memberService.deleteMember(+this.id).subscribe({
+      next: () => this.router.navigate(['/manager/overview']),
+      error: () => { this.deleting = false; this.showDeleteConfirm = false; }
     });
   }
 

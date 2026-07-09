@@ -8,6 +8,6 @@ export const environment = {
     storageBucket: 'cic-kpis.firebasestorage.app',
     messagingSenderId: '596669272965',
     appId: '1:596669272965:web:72c66b135aac0f1db0aaec',
-    vapidKey: 'REPLACE_WITH_VAPID_KEY'
+    vapidKey: 'BDbVTI3JKXbuvIM80DUwfRqSRGvDZPHRh1m8tJUgFf8Dbb6Q28H1y8b-KO_yOfEb-oyWMTHQqGXJ0MDFWjteFg4'
   }
 };
