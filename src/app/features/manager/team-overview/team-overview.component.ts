@@ -189,8 +189,14 @@ const PAGE_SIZE = 12;
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Password * (min 6 chars)</label>
-            <input [(ngModel)]="form.password" type="password" placeholder="Initial password"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+            <div class="relative">
+              <input [(ngModel)]="form.password" [type]="showFormPassword ? 'text' : 'password'" placeholder="Initial password"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+              <button type="button" (click)="showFormPassword = !showFormPassword"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600">
+                {{ showFormPassword ? 'Hide' : 'Show' }}
+              </button>
+            </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -333,8 +339,10 @@ export class TeamOverviewComponent implements OnInit {
   teams: TeamName[] = ['TECHNICAL'];
   moduleFilters: ModuleName[] = ['FRONTEND', 'BACKEND', 'TESTING', 'FLUTTER'];
 
+  allLeads: MemberSummary[] = [];
+
   get isManager(): boolean { return this.auth.role === 'MANAGER'; }
-  get teamLeads(): MemberSummary[] { return this.members().filter(m => m.role === 'TEAM_LEAD' || m.role === 'MANAGER'); }
+  get teamLeads(): MemberSummary[] { return this.allLeads; }
   nextPage(): number { return this._nextPage(); }
   isLastPage(): boolean { return this._lastPage(); }
 
@@ -391,12 +399,14 @@ export class TeamOverviewComponent implements OnInit {
 
   // Create member modal
   showCreate = false;
+  showFormPassword = false;
   creating = false;
   createError = '';
   form = { name: '', email: '', password: '', team: '' as TeamName | '', module: '' as ModuleName | '', role: 'MEMBER' as UserRole, teamLeadId: undefined as number | undefined };
 
   closeCreate(): void {
     this.showCreate = false;
+    this.showFormPassword = false;
     this.createError = '';
     this.form = { name: '', email: '', password: '', team: '', module: '', role: 'MEMBER', teamLeadId: undefined };
   }
@@ -478,5 +488,11 @@ export class TeamOverviewComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void { this.load(true); }
+  ngOnInit(): void {
+    this.load(true);
+    this.memberService.getMembers({ size: 200 }).subscribe(res => {
+      this.allLeads = res.data.filter(m => m.role === 'TEAM_LEAD' || m.role === 'MANAGER');
+      this.cdr.markForCheck();
+    });
+  }
 }
