@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -171,7 +171,7 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
       <!-- Logs grouped by date -->
       <h3 class="text-sm font-semibold text-gray-700 mb-3">All Logs</h3>
       <div class="space-y-4 mb-6">
-        <div *ngFor="let group of logsByDate()" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div *ngFor="let group of logsByDate(); trackBy: trackByDate" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
 
           <!-- Date header -->
           <div class="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
@@ -193,7 +193,7 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
           <!-- Single daily rating for the whole day -->
           <div class="px-4 py-3 border-t border-gray-100">
             <!-- Existing rating display -->
-            <div *ngIf="group.rating && editingRatingDate !== group.date">
+            <div *ngIf="group.rating && editingRatingDate() !== group.date">
               <div class="flex items-center gap-2">
                 <app-star-rating [rating]="group.rating.rating" [readonly]="true" />
                 <span *ngIf="group.rating.isAutomated" class="text-xs text-gray-400 italic">(Auto)</span>
@@ -202,7 +202,7 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
               <p *ngIf="group.rating.comment" class="text-xs text-gray-500 mt-1 italic">"{{ group.rating.comment }}"</p>
             </div>
             <!-- Edit rating form -->
-            <div *ngIf="group.rating && editingRatingDate === group.date" class="space-y-2">
+            <div *ngIf="group.rating && editingRatingDate() === group.date" class="space-y-2">
               <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Edit day rating</p>
               <app-star-rating [rating]="editRatingValue" (ratingChange)="editRatingValue = $event" />
               <textarea [(ngModel)]="editRatingComment" rows="2" placeholder="Comment (optional)…"
@@ -210,7 +210,7 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
               <div class="flex gap-2">
                 <button (click)="saveEditRatingByDate(group)" [disabled]="editRatingValue === 0"
                   class="bg-primary text-white px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">Save</button>
-                <button (click)="editingRatingDate = null"
+                <button (click)="editingRatingDate.set(null)"
                   class="border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg text-sm">Cancel</button>
               </div>
             </div>
@@ -371,7 +371,7 @@ export class MemberDetailComponent implements OnInit {
   weekStart = this.currentWeekStart();
   itemNotes: Record<string, string> = {};
   private inlineRatings = new Map<string, number>();
-  editingRatingDate: string | null = null;
+  editingRatingDate = signal<string | null>(null);
   editRatingValue = 0;
   editRatingComment = '';
   newPassword = '';
@@ -382,7 +382,7 @@ export class MemberDetailComponent implements OnInit {
   inlineRatingByDate(date: string): number { return this.inlineRatings.get(date) ?? 0; }
   setInlineRatingByDate(date: string, r: number): void { this.inlineRatings.set(date, r); }
 
-  logsByDate(): Array<{ date: string; logs: DailyLogResponse[]; rating: DailyLogResponse['rating'] }> {
+  readonly logsByDate = computed(() => {
     const map = new Map<string, DailyLogResponse[]>();
     for (const log of this.logs()) {
       const existing = map.get(log.logDate) ?? [];
@@ -396,7 +396,9 @@ export class MemberDetailComponent implements OnInit {
         logs,
         rating: logs.find(l => l.rating)?.rating ?? null
       }));
-  }
+  });
+
+  trackByDate(_: number, group: { date: string }): string { return group.date; }
 
   toggleDay(d: DayOfWeek): void {
     this.wfhDaysEdit = this.wfhDaysEdit.includes(d)
@@ -519,7 +521,7 @@ export class MemberDetailComponent implements OnInit {
 
   openEditRatingByDate(group: { date: string; logs: DailyLogResponse[]; rating: DailyLogResponse['rating'] }): void {
     if (!group.rating) return;
-    this.editingRatingDate = group.date;
+    this.editingRatingDate.set(group.date);
     this.editRatingValue = group.rating.rating;
     this.editRatingComment = group.rating.comment ?? '';
   }
@@ -528,7 +530,7 @@ export class MemberDetailComponent implements OnInit {
     if (!group.rating || this.editRatingValue === 0) return;
     this.ratingService.updateRating(group.rating.id, this.editRatingValue, this.editRatingComment).subscribe(r => {
       this.logs.update(ls => ls.map(l => l.logDate === group.date ? { ...l, rating: r } : l));
-      this.editingRatingDate = null;
+      this.editingRatingDate.set(null);
       this.memberService.getMember(+this.id).subscribe(m => this.member.set(m));
     });
   }
