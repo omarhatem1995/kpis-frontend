@@ -8,7 +8,7 @@ import { RatingService } from '../../../core/services/rating.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MemberSummary, DayOfWeek, TeamName, ModuleName, UserRole } from '../../../core/models/user.model';
 import { DailyLogResponse } from '../../../core/models/daily-log.model';
-import { KpiReport } from '../../../core/models/kpi-report.model';
+import { KpiReport, WeeklyReview, WeeklyReviewItem } from '../../../core/models/kpi-report.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { ScorePillComponent } from '../../../shared/components/score-pill/score-pill.component';
 import { StarRatingComponent } from '../../../shared/components/star-rating/star-rating.component';
@@ -168,43 +168,60 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
         </div>
       </div>
 
-      <!-- Logs list -->
+      <!-- Logs grouped by date -->
       <h3 class="text-sm font-semibold text-gray-700 mb-3">All Logs</h3>
-      <div class="space-y-3 mb-6">
-        <div *ngFor="let log of logs()" class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <div class="flex items-center justify-between mb-2">
-            <p class="text-sm font-medium text-gray-900">{{ log.logDate | date:'EEE, d MMM yyyy' }}</p>
-            <span *ngIf="log.isUnscheduledWfh" class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Unscheduled WFH</span>
+      <div class="space-y-4 mb-6">
+        <div *ngFor="let group of logsByDate()" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+
+          <!-- Date header -->
+          <div class="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+            <p class="text-sm font-semibold text-gray-900">{{ group.date | date:'EEE, d MMM yyyy' }}</p>
+            <span *ngIf="group.logs[0].isUnscheduledWfh" class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Unscheduled WFH</span>
           </div>
-          <p class="text-xs text-gray-500 mb-2">{{ log.projectName }}</p>
-          <p class="text-sm text-gray-700 line-clamp-2 mb-3">{{ log.tasksDescription }}</p>
-          <div *ngIf="log.rating">
-            <div *ngIf="editingRatingId !== log.id">
-              <div class="flex items-center gap-2">
-                <app-star-rating [rating]="log.rating.rating" [readonly]="true" />
-                <span *ngIf="log.rating.isAutomated" class="text-xs text-gray-400 italic">(Auto)</span>
-                <button (click)="openEditRating(log)" class="text-xs text-gray-400 hover:text-primary ml-auto">Edit rating</button>
+
+          <!-- Individual tasks for this day -->
+          <div class="divide-y divide-gray-50">
+            <div *ngFor="let log of group.logs" class="px-4 py-3">
+              <p class="text-xs text-gray-400 mb-0.5">{{ log.projectName || 'No project' }}</p>
+              <p class="text-sm text-gray-700">{{ log.tasksDescription }}</p>
+              <div *ngIf="log.collaborators?.length" class="flex flex-wrap gap-1 mt-1.5">
+                <span *ngFor="let c of log.collaborators" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">👥 {{ c.name }}</span>
               </div>
-              <p *ngIf="log.rating.comment" class="text-xs text-gray-500 mt-1 italic">"{{ log.rating.comment }}"</p>
             </div>
-            <div *ngIf="editingRatingId === log.id" class="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
-              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Edit rating</p>
+          </div>
+
+          <!-- Single daily rating for the whole day -->
+          <div class="px-4 py-3 border-t border-gray-100">
+            <!-- Existing rating display -->
+            <div *ngIf="group.rating && editingRatingDate !== group.date">
+              <div class="flex items-center gap-2">
+                <app-star-rating [rating]="group.rating.rating" [readonly]="true" />
+                <span *ngIf="group.rating.isAutomated" class="text-xs text-gray-400 italic">(Auto)</span>
+                <button (click)="openEditRatingByDate(group)" class="text-xs text-gray-400 hover:text-primary ml-auto">Edit rating</button>
+              </div>
+              <p *ngIf="group.rating.comment" class="text-xs text-gray-500 mt-1 italic">"{{ group.rating.comment }}"</p>
+            </div>
+            <!-- Edit rating form -->
+            <div *ngIf="group.rating && editingRatingDate === group.date" class="space-y-2">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Edit day rating</p>
               <app-star-rating [rating]="editRatingValue" (ratingChange)="editRatingValue = $event" />
               <textarea [(ngModel)]="editRatingComment" rows="2" placeholder="Comment (optional)…"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"></textarea>
               <div class="flex gap-2">
-                <button (click)="saveEditRating(log)" [disabled]="editRatingValue === 0"
+                <button (click)="saveEditRatingByDate(group)" [disabled]="editRatingValue === 0"
                   class="bg-primary text-white px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">Save</button>
-                <button (click)="editingRatingId = null"
+                <button (click)="editingRatingDate = null"
                   class="border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg text-sm">Cancel</button>
               </div>
             </div>
+            <!-- New rating -->
+            <div *ngIf="!group.rating" class="flex items-center gap-3">
+              <app-star-rating [rating]="inlineRatingByDate(group.date)" (ratingChange)="setInlineRatingByDate(group.date, $event)" />
+              <button (click)="quickRateDate(group)" [disabled]="inlineRatingByDate(group.date) === 0"
+                class="text-xs bg-primary text-white px-3 py-1 rounded-lg disabled:opacity-50">Rate day</button>
+            </div>
           </div>
-          <div *ngIf="!log.rating" class="flex items-center gap-3">
-            <app-star-rating [rating]="inlineRating(log.id)" (ratingChange)="setInlineRating(log.id, $event)" />
-            <button (click)="quickRate(log)" [disabled]="inlineRating(log.id) === 0"
-              class="text-xs bg-primary text-white px-3 py-1 rounded-lg disabled:opacity-50">Rate</button>
-          </div>
+
         </div>
       </div>
 
@@ -222,6 +239,77 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
               <app-kpi-progress-bar *ngFor="let item of section.items"
                 [itemKey]="item.key" [label]="item.label" [earned]="item.score" [max]="item.weight" [tooltip]="item.tooltip" />
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Review -->
+      <div class="mt-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-gray-700">Weekly Review</h3>
+          <div class="flex items-center gap-2">
+            <button (click)="shiftWeek(-1)" class="text-gray-500 hover:text-gray-700 px-1.5 py-0.5 border border-gray-200 rounded text-xs">‹</button>
+            <span class="text-xs text-gray-500 min-w-[90px] text-center">{{ weekStartLabel }}</span>
+            <button (click)="shiftWeek(1)" class="text-gray-500 hover:text-gray-700 px-1.5 py-0.5 border border-gray-200 rounded text-xs">›</button>
+            <button (click)="toggleReviewMode()" class="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors"
+              [class.bg-primary]="!reviewMode" [class.text-white]="!reviewMode"
+              [class.border]="reviewMode" [class.border-gray-300]="reviewMode" [class.text-gray-700]="reviewMode">
+              {{ reviewMode ? 'Close' : 'Review' }}
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="reviewMode">
+          <div *ngIf="!weeklyReview()" class="text-xs text-gray-400 py-4 text-center">Loading…</div>
+          <div *ngIf="weeklyReview()">
+            <!-- Progress -->
+            <div class="flex items-center gap-2 mb-4 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
+              <span class="text-sm">✅</span>
+              <span class="text-sm font-medium text-gray-700">{{ weeklyReview()!.checkedCount }} / {{ weeklyReview()!.totalCount }} items reviewed</span>
+              <div class="flex-1 h-1.5 bg-gray-100 rounded-full ml-2">
+                <div class="h-1.5 bg-primary rounded-full transition-all"
+                  [style.width.%]="weeklyReview()!.totalCount ? (weeklyReview()!.checkedCount / weeklyReview()!.totalCount) * 100 : 0"></div>
+              </div>
+            </div>
+
+            <!-- Items grouped by KPI section -->
+            <div class="space-y-3">
+              <div *ngFor="let sec of reviewSections()" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                  <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider">{{ sec.title }}</p>
+                </div>
+                <div class="divide-y divide-gray-50">
+                  <div *ngFor="let item of sec.items" class="px-4 py-3">
+                    <div class="flex items-start gap-3">
+                      <input type="checkbox" [checked]="item.checked"
+                        (change)="toggleItemChecked(item)"
+                        class="mt-0.5 accent-primary cursor-pointer shrink-0" />
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2">
+                          <p class="text-sm text-gray-800">
+                            <span class="text-xs text-gray-400 font-medium mr-1">{{ item.key }}</span>{{ item.label }}
+                          </p>
+                          <span class="text-xs font-medium shrink-0"
+                            [class.text-primary]="item.suggestedScore >= item.maxScore * 0.8"
+                            [class.text-amber-600]="item.suggestedScore < item.maxScore * 0.8 && item.suggestedScore >= item.maxScore * 0.5"
+                            [class.text-danger]="item.suggestedScore < item.maxScore * 0.5">
+                            {{ item.suggestedScore | number:'1.1-1' }} / {{ item.maxScore }}
+                          </span>
+                        </div>
+                        <input *ngIf="item.checked" type="text" [(ngModel)]="itemNotes[item.key]"
+                          placeholder="Add a note (optional)…"
+                          class="mt-1.5 w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button (click)="saveReview()" [disabled]="reviewSaving"
+              class="mt-4 bg-primary hover:bg-primary-hover text-white px-5 py-2 text-sm rounded-lg font-medium disabled:opacity-50 transition-colors">
+              {{ reviewSaving ? 'Saving…' : 'Save review' }}
+            </button>
           </div>
         </div>
       </div>
@@ -277,8 +365,13 @@ export class MemberDetailComponent implements OnInit {
   teams: TeamName[] = ['TECHNICAL'];
   modules: ModuleName[] = ['FRONTEND', 'BACKEND', 'TESTING', 'FLUTTER'];
   openKpiSections = new Set<string>();
-  private inlineRatings = new Map<number, number>();
-  editingRatingId: number | null = null;
+  weeklyReview = signal<WeeklyReview | null>(null);
+  reviewMode = false;
+  reviewSaving = false;
+  weekStart = this.currentWeekStart();
+  itemNotes: Record<string, string> = {};
+  private inlineRatings = new Map<string, number>();
+  editingRatingDate: string | null = null;
   editRatingValue = 0;
   editRatingComment = '';
   newPassword = '';
@@ -286,8 +379,24 @@ export class MemberDetailComponent implements OnInit {
   notifyWithPassword = false;
   passwordSaved = signal(false);
 
-  inlineRating(id: number): number { return this.inlineRatings.get(id) ?? 0; }
-  setInlineRating(id: number, r: number): void { this.inlineRatings.set(id, r); }
+  inlineRatingByDate(date: string): number { return this.inlineRatings.get(date) ?? 0; }
+  setInlineRatingByDate(date: string, r: number): void { this.inlineRatings.set(date, r); }
+
+  logsByDate(): Array<{ date: string; logs: DailyLogResponse[]; rating: DailyLogResponse['rating'] }> {
+    const map = new Map<string, DailyLogResponse[]>();
+    for (const log of this.logs()) {
+      const existing = map.get(log.logDate) ?? [];
+      existing.push(log);
+      map.set(log.logDate, existing);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([date, logs]) => ({
+        date,
+        logs,
+        rating: logs.find(l => l.rating)?.rating ?? null
+      }));
+  }
 
   toggleDay(d: DayOfWeek): void {
     this.wfhDaysEdit = this.wfhDaysEdit.includes(d)
@@ -297,6 +406,68 @@ export class MemberDetailComponent implements OnInit {
 
   toggleKpiSection(key: string): void {
     this.openKpiSections.has(key) ? this.openKpiSections.delete(key) : this.openKpiSections.add(key);
+  }
+
+  private currentWeekStart(): string {
+    const d = new Date();
+    d.setDate(d.getDate() - d.getDay()); // back to Sunday
+    return d.toISOString().split('T')[0];
+  }
+
+  get weekStartLabel(): string {
+    return new Date(this.weekStart + 'T00:00:00').toLocaleDateString('en-EG', { day: 'numeric', month: 'short' });
+  }
+
+  shiftWeek(dir: 1 | -1): void {
+    const d = new Date(this.weekStart + 'T00:00:00');
+    d.setDate(d.getDate() + dir * 7);
+    this.weekStart = d.toISOString().split('T')[0];
+    if (this.reviewMode) this.loadReview();
+  }
+
+  toggleReviewMode(): void {
+    this.reviewMode = !this.reviewMode;
+    if (this.reviewMode && !this.weeklyReview()) this.loadReview();
+  }
+
+  private loadReview(): void {
+    this.weeklyReview.set(null);
+    this.memberService.getWeeklyReview(+this.id, this.weekStart).subscribe(r => {
+      this.weeklyReview.set(r);
+      this.itemNotes = Object.fromEntries(r.items.map(i => [i.key, i.note ?? '']));
+    });
+  }
+
+  reviewSections(): Array<{ key: string; title: string; items: WeeklyReviewItem[] }> {
+    const review = this.weeklyReview();
+    if (!review || !this.kpi()) return [];
+    const itemMap = new Map(review.items.map(i => [i.key, i]));
+    return (this.kpi()!.sections ?? []).map(sec => ({
+      key: sec.key,
+      title: sec.title,
+      items: (sec.items ?? [])
+        .map(ki => itemMap.get(ki.key))
+        .filter((i): i is WeeklyReviewItem => i != null)
+    }));
+  }
+
+  toggleItemChecked(item: WeeklyReviewItem): void {
+    const review = this.weeklyReview();
+    if (!review) return;
+    const updated = review.items.map(i => i.key === item.key ? { ...i, checked: !i.checked } : i);
+    const checkedCount = updated.filter(i => i.checked).length;
+    this.weeklyReview.set({ ...review, items: updated, checkedCount });
+  }
+
+  saveReview(): void {
+    const review = this.weeklyReview();
+    if (!review) return;
+    this.reviewSaving = true;
+    const items = review.items.map(i => ({ key: i.key, checked: i.checked, note: this.itemNotes[i.key] || null }));
+    this.memberService.saveWeeklyReview(+this.id, this.weekStart, items).subscribe({
+      next: r => { this.weeklyReview.set(r); this.reviewSaving = false; },
+      error: () => { this.reviewSaving = false; }
+    });
   }
 
   savePassword(): void {
@@ -336,31 +507,29 @@ export class MemberDetailComponent implements OnInit {
     });
   }
 
-  quickRate(log: DailyLogResponse): void {
-    const rating = this.inlineRating(log.id);
-    this.ratingService.submitRating(log.userId, log.logDate, rating, '').subscribe(() => {
-      this.logs.update(ls => ls.map(l => l.userId === log.userId && l.logDate === log.logDate
-        ? { ...l, rating: { id: 0, rating, comment: null, ratedAt: new Date().toISOString(), isAutomated: false } }
-        : l));
-      // Reload member summary so Avg rating, Unrated count, and KPI score refresh
-      this.memberService.getMember(log.userId).subscribe(m => this.member.set(m));
+  quickRateDate(group: { date: string; logs: DailyLogResponse[] }): void {
+    const rating = this.inlineRatingByDate(group.date);
+    const memberId = +this.id;
+    this.ratingService.submitRating(memberId, group.date, rating, '').subscribe(() => {
+      const ratingObj = { id: 0, rating, comment: null, ratedAt: new Date().toISOString(), isAutomated: false };
+      this.logs.update(ls => ls.map(l => l.logDate === group.date ? { ...l, rating: ratingObj } : l));
+      this.memberService.getMember(memberId).subscribe(m => this.member.set(m));
     });
   }
 
-  openEditRating(log: DailyLogResponse): void {
-    if (!log.rating) return;
-    this.editingRatingId = log.id;
-    this.editRatingValue = log.rating.rating;
-    this.editRatingComment = log.rating.comment ?? '';
+  openEditRatingByDate(group: { date: string; logs: DailyLogResponse[]; rating: DailyLogResponse['rating'] }): void {
+    if (!group.rating) return;
+    this.editingRatingDate = group.date;
+    this.editRatingValue = group.rating.rating;
+    this.editRatingComment = group.rating.comment ?? '';
   }
 
-  saveEditRating(log: DailyLogResponse): void {
-    if (!log.rating || this.editRatingValue === 0) return;
-    this.ratingService.updateRating(log.rating.id, this.editRatingValue, this.editRatingComment).subscribe(r => {
-      this.logs.update(ls => ls.map(l => l.id === log.id ? { ...l, rating: r } : l));
-      this.editingRatingId = null;
-      // Reload member summary so KPI score and Avg rating refresh immediately
-      this.memberService.getMember(log.userId).subscribe(m => this.member.set(m));
+  saveEditRatingByDate(group: { date: string; logs: DailyLogResponse[]; rating: DailyLogResponse['rating'] }): void {
+    if (!group.rating || this.editRatingValue === 0) return;
+    this.ratingService.updateRating(group.rating.id, this.editRatingValue, this.editRatingComment).subscribe(r => {
+      this.logs.update(ls => ls.map(l => l.logDate === group.date ? { ...l, rating: r } : l));
+      this.editingRatingDate = null;
+      this.memberService.getMember(+this.id).subscribe(m => this.member.set(m));
     });
   }
 

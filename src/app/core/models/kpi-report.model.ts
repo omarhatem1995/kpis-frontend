@@ -1,3 +1,22 @@
+export interface WeeklyReviewItem {
+  key: string;
+  label: string;
+  maxScore: number;
+  suggestedScore: number;
+  checked: boolean;
+  note: string | null;
+}
+
+export interface WeeklyReview {
+  memberId: number;
+  memberName: string;
+  weekStart: string;
+  quarter: string;
+  checkedCount: number;
+  totalCount: number;
+  items: WeeklyReviewItem[];
+}
+
 export interface KpiItem {
   key: string;
   label: string;

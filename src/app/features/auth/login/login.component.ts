@@ -57,7 +57,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 
           <button
             type="submit"
-            [disabled]="loading() || !email || !password"
+            [disabled]="loading()"
             class="w-full bg-primary hover:bg-primary-hover text-white py-2.5 rounded-lg font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ loading() ? 'Signing in…' : 'Sign in' }}

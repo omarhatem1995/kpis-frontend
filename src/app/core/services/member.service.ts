@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiResponse, ApiResponsePaging, MemberSummary, UpdateMemberRequest, CreateMemberRequest, WfhScheduleResponse, DayOfWeek } from '../models/user.model';
 import { DailyLogResponse } from '../models/daily-log.model';
-import { KpiReport } from '../models/kpi-report.model';
+import { KpiReport, WeeklyReview } from '../models/kpi-report.model';
 import { LeaveRequestResponse, LeaveRequestCreate, LeaveReviewRequest } from '../models/leave-request.model';
 import { WeekendConfigResponse, WfhMonitorEntry } from '../models/weekend-config.model';
 
@@ -44,6 +44,16 @@ export class MemberService {
     return this.http.get<ApiResponse<DailyLogResponse[]>>(`${this.base}/manager/members/${userId}/logs`, {
       params: new HttpParams().set('month', month)
     }).pipe(map(r => r.data));
+  }
+
+  getWeeklyReview(userId: number, weekStart: string): Observable<WeeklyReview> {
+    return this.http.get<ApiResponse<WeeklyReview>>(`${this.base}/manager/members/${userId}/weeklyReview`, {
+      params: new HttpParams().set('weekStart', weekStart)
+    }).pipe(map(r => r.data));
+  }
+
+  saveWeeklyReview(userId: number, weekStart: string, items: { key: string; checked: boolean; note: string | null }[]): Observable<WeeklyReview> {
+    return this.http.put<ApiResponse<WeeklyReview>>(`${this.base}/manager/members/${userId}/weeklyReview`, { weekStart, items }).pipe(map(r => r.data));
   }
 
   getMemberKpi(userId: number, quarter: string): Observable<KpiReport> {
