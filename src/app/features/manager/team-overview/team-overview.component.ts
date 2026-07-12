@@ -96,7 +96,7 @@ const PAGE_SIZE = 12;
               type="text" placeholder="Search by name or email…"
               class="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-gray-50" />
           </div>
-          <select [(ngModel)]="activeModule" (ngModelChange)="selectModule($event)"
+          <select *ngIf="isManager" [(ngModel)]="activeModule" (ngModelChange)="selectModule($event)"
             class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-gray-50">
             <option value="All">All modules</option>
             <option *ngFor="let m of moduleFilters" [value]="m">{{ m }}</option>

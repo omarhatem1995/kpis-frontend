@@ -128,7 +128,7 @@ const TYPE_ICON: Record<string, string> = {
       </header>
 
       <!-- Click-outside overlay to close panel -->
-      <div *ngIf="showNotifPanel" class="fixed inset-0 z-40" (click)="showNotifPanel = false"></div>
+      <div *ngIf="showNotifPanel" class="fixed inset-0 z-20" (click)="showNotifPanel = false"></div>
 
       <div class="flex pt-14 min-h-screen">
 

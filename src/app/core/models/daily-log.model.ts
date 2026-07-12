@@ -18,6 +18,7 @@ export interface RatingSummary {
   comment: string | null;
   ratedAt: string;
   isAutomated: boolean;
+  ratedByName: string | null;
 }
 
 export interface DailyLogResponse {

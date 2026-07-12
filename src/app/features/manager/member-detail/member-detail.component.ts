@@ -5,9 +5,10 @@ import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { MemberService } from '../../../core/services/member.service';
 import { RatingService } from '../../../core/services/rating.service';
+import { LogService } from '../../../core/services/log.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MemberSummary, DayOfWeek, TeamName, ModuleName, UserRole } from '../../../core/models/user.model';
-import { DailyLogResponse } from '../../../core/models/daily-log.model';
+import { DailyLogResponse, LogComment } from '../../../core/models/daily-log.model';
 import { KpiReport, WeeklyReview, WeeklyReviewItem } from '../../../core/models/kpi-report.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { ScorePillComponent } from '../../../shared/components/score-pill/score-pill.component';
@@ -182,10 +183,38 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
           <!-- Individual tasks for this day -->
           <div class="divide-y divide-gray-50">
             <div *ngFor="let log of group.logs" class="px-4 py-3">
-              <p class="text-xs text-gray-400 mb-0.5">{{ log.projectName || 'No project' }}</p>
+              <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+                <p class="text-xs text-gray-400">{{ log.projectName || 'No project' }}</p>
+                <span *ngIf="log.userId !== +id"
+                  class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                  📋 {{ log.memberName }}'s task
+                </span>
+              </div>
               <p class="text-sm text-gray-700">{{ log.tasksDescription }}</p>
               <div *ngIf="log.collaborators?.length" class="flex flex-wrap gap-1 mt-1.5">
                 <span *ngFor="let c of log.collaborators" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">👥 {{ c.name }}</span>
+              </div>
+
+              <!-- Comments thread -->
+              <div class="mt-3 border-t border-gray-100 pt-2 space-y-2">
+                <div *ngFor="let c of log.comments" class="flex gap-2">
+                  <div class="flex-1 bg-gray-50 rounded-lg px-3 py-2">
+                    <div class="flex items-center gap-1.5 mb-0.5">
+                      <span class="text-xs font-semibold text-gray-800">{{ c.authorName }}</span>
+                      <span class="text-[10px] text-gray-400 uppercase tracking-wide">{{ c.authorRole === 'MANAGER' ? 'Manager' : c.authorRole === 'TEAM_LEAD' ? 'Lead' : '' }}</span>
+                      <span class="text-[10px] text-gray-400 ml-auto">{{ c.createdAt | date:'d MMM, HH:mm' }}</span>
+                    </div>
+                    <p class="text-xs text-gray-700 whitespace-pre-line">{{ c.body }}</p>
+                  </div>
+                </div>
+                <!-- Add comment -->
+                <div class="flex gap-2 mt-1">
+                  <input [(ngModel)]="commentInputs[log.id]" (keyup.enter)="addComment(log)"
+                    type="text" placeholder="Add a comment… (Enter to send)"
+                    class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary bg-gray-50" />
+                  <button (click)="addComment(log)" [disabled]="!commentInputs[log.id]?.trim() || commentSubmitting.has(log.id)"
+                    class="text-xs bg-primary text-white px-3 py-1.5 rounded-lg disabled:opacity-40">Send</button>
+                </div>
               </div>
             </div>
           </div>
@@ -194,8 +223,9 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
           <div class="px-4 py-3 border-t border-gray-100">
             <!-- Existing rating display -->
             <div *ngIf="group.rating && editingRatingDate() !== group.date">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <app-star-rating [rating]="group.rating.rating" [readonly]="true" />
+                <span *ngIf="group.rating.ratedByName" class="text-xs text-gray-400">by {{ group.rating.ratedByName }}</span>
                 <button (click)="openEditRatingByDate(group)" class="text-xs text-gray-400 hover:text-primary ml-auto">Edit rating</button>
               </div>
               <p *ngIf="group.rating.comment" class="text-xs text-gray-500 mt-1 italic">"{{ group.rating.comment }}"</p>
@@ -337,6 +367,7 @@ export class MemberDetailComponent implements OnInit {
 
   private readonly memberService = inject(MemberService);
   private readonly ratingService = inject(RatingService);
+  private readonly logService = inject(LogService);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
 
@@ -377,6 +408,23 @@ export class MemberDetailComponent implements OnInit {
   showPassword = false;
   notifyWithPassword = false;
   passwordSaved = signal(false);
+
+  // Comments: keyed by logId
+  commentInputs: Record<number, string> = {};
+  commentSubmitting = new Set<number>();
+
+  addComment(log: DailyLogResponse): void {
+    const body = (this.commentInputs[log.id] ?? '').trim();
+    if (!body) return;
+    this.commentSubmitting.add(log.id);
+    this.logService.addComment(log.id, body).subscribe(comment => {
+      this.logs.update(ls => ls.map(l => l.id === log.id
+        ? { ...l, comments: [...(l.comments ?? []), comment] }
+        : l));
+      this.commentInputs[log.id] = '';
+      this.commentSubmitting.delete(log.id);
+    });
+  }
 
   inlineRatingByDate(date: string): number { return this.inlineRatings.get(date) ?? 0; }
   setInlineRatingByDate(date: string, r: number): void { this.inlineRatings.set(date, r); }
