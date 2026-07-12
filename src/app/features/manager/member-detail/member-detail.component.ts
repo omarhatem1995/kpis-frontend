@@ -196,7 +196,6 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
             <div *ngIf="group.rating && editingRatingDate() !== group.date">
               <div class="flex items-center gap-2">
                 <app-star-rating [rating]="group.rating.rating" [readonly]="true" />
-                <span *ngIf="group.rating.isAutomated" class="text-xs text-gray-400 italic">(Auto)</span>
                 <button (click)="openEditRatingByDate(group)" class="text-xs text-gray-400 hover:text-primary ml-auto">Edit rating</button>
               </div>
               <p *ngIf="group.rating.comment" class="text-xs text-gray-500 mt-1 italic">"{{ group.rating.comment }}"</p>
@@ -383,6 +382,7 @@ export class MemberDetailComponent implements OnInit {
   setInlineRatingByDate(date: string, r: number): void { this.inlineRatings.set(date, r); }
 
   readonly logsByDate = computed(() => {
+    const memberId = +this.id;
     const map = new Map<string, DailyLogResponse[]>();
     for (const log of this.logs()) {
       const existing = map.get(log.logDate) ?? [];
@@ -391,11 +391,12 @@ export class MemberDetailComponent implements OnInit {
     }
     return Array.from(map.entries())
       .sort(([a], [b]) => b.localeCompare(a))
-      .map(([date, logs]) => ({
-        date,
-        logs,
-        rating: logs.find(l => l.rating)?.rating ?? null
-      }));
+      .map(([date, logs]) => {
+        // Prefer the viewed member's own log rating; fall back to any log with a rating
+        const ownRating = logs.find(l => l.userId === memberId && l.rating)?.rating ?? null;
+        const anyRating = logs.find(l => l.rating)?.rating ?? null;
+        return { date, logs, rating: ownRating ?? anyRating };
+      });
   });
 
   trackByDate(_: number, group: { date: string }): string { return group.date; }
