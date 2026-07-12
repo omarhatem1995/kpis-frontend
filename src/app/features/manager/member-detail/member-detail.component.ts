@@ -169,9 +169,38 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
         </div>
       </div>
 
+      <!-- Logs section header + month nav -->
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-gray-700">All Logs</h3>
+        <div class="flex items-center gap-2">
+          <button (click)="shiftMonth(-1)"
+            class="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 text-xs">◀</button>
+          <span class="text-sm font-medium text-gray-700 w-28 text-center">{{ selectedMonthLabel }}</span>
+          <button (click)="shiftMonth(1)" [disabled]="isCurrentMonth"
+            class="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 text-xs disabled:opacity-30">▶</button>
+        </div>
+      </div>
+
+      <!-- Logs loading skeleton -->
+      <div *ngIf="logsLoading()" class="space-y-3 mb-6">
+        <div *ngFor="let _ of [1,2,3]" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-pulse">
+          <div class="h-10 bg-gray-100"></div>
+          <div class="p-4 space-y-2">
+            <div class="h-3 bg-gray-100 rounded w-1/4"></div>
+            <div class="h-4 bg-gray-100 rounded w-3/4"></div>
+            <div class="h-4 bg-gray-100 rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No logs -->
+      <div *ngIf="!logsLoading() && logsByDate().length === 0"
+        class="bg-white rounded-xl border border-gray-200 p-8 text-center text-sm text-gray-400 mb-6">
+        No logs for this month
+      </div>
+
       <!-- Logs grouped by date -->
-      <h3 class="text-sm font-semibold text-gray-700 mb-3">All Logs</h3>
-      <div class="space-y-4 mb-6">
+      <div *ngIf="!logsLoading()" class="space-y-4 mb-6">
         <div *ngFor="let group of logsByDate(); trackBy: trackByDate" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
 
           <!-- Date header -->
@@ -409,6 +438,37 @@ export class MemberDetailComponent implements OnInit {
   notifyWithPassword = false;
   passwordSaved = signal(false);
 
+  // Month navigation
+  logsLoading = signal(false);
+  selectedMonth = signal<string>(this.currentMonthStr());
+
+  get selectedMonthLabel(): string {
+    const [y, m] = this.selectedMonth().split('-');
+    return new Date(+y, +m - 1, 1).toLocaleDateString('en-EG', { month: 'long', year: 'numeric' });
+  }
+
+  get isCurrentMonth(): boolean { return this.selectedMonth() === this.currentMonthStr(); }
+
+  private currentMonthStr(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  shiftMonth(dir: 1 | -1): void {
+    const [y, m] = this.selectedMonth().split('-').map(Number);
+    const d = new Date(y, m - 1 + dir, 1);
+    this.selectedMonth.set(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    this.loadLogs(+this.id, this.selectedMonth());
+  }
+
+  private loadLogs(uid: number, month: string): void {
+    this.logsLoading.set(true);
+    this.memberService.getMemberLogs(uid, month).subscribe(logs => {
+      this.logs.set([...logs].sort((a, b) => b.logDate.localeCompare(a.logDate)));
+      this.logsLoading.set(false);
+    });
+  }
+
   // Comments: keyed by logId
   commentInputs: Record<number, string> = {};
   commentSubmitting = new Set<number>();
@@ -562,7 +622,7 @@ export class MemberDetailComponent implements OnInit {
     const rating = this.inlineRatingByDate(group.date);
     const memberId = +this.id;
     this.ratingService.submitRating(memberId, group.date, rating, '').subscribe(() => {
-      const ratingObj = { id: 0, rating, comment: null, ratedAt: new Date().toISOString(), isAutomated: false };
+      const ratingObj = { id: 0, rating, comment: null, ratedAt: new Date().toISOString(), isAutomated: false, ratedByName: null };
       this.logs.update(ls => ls.map(l => l.logDate === group.date ? { ...l, rating: ratingObj } : l));
       this.memberService.getMember(memberId).subscribe(m => this.member.set(m));
     });
@@ -586,8 +646,7 @@ export class MemberDetailComponent implements OnInit {
 
   ngOnInit(): void {
     const uid = +this.id;
-    const now = new Date();
-    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const month = this.selectedMonth();
 
     forkJoin({
       member: this.memberService.getMember(uid),
@@ -603,9 +662,7 @@ export class MemberDetailComponent implements OnInit {
       this.editRole = m.role;
       this.editTeamLeadId = m.teamLeadId;
     });
-    this.memberService.getMemberLogs(uid, month).subscribe(logs => {
-      this.logs.set([...logs].sort((a, b) => b.logDate.localeCompare(a.logDate)));
-    });
+    this.loadLogs(uid, month);
     this.memberService.getMemberKpi(uid, month).subscribe(k => {
       this.kpi.set(k);
       this.openKpiSections = new Set(k.sections.map(s => s.key));
