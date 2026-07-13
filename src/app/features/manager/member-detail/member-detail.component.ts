@@ -245,7 +245,7 @@ interface CommentSegment {
                         <button *ngIf="seg.type === 'mention'"
                           (click)="seg.userId ? router.navigate(['/manager/member', seg.userId]) : null"
                           class="inline-flex items-center gap-0.5 bg-blue-100 text-blue-700 font-semibold px-1.5 py-0.5 rounded-md text-[11px] hover:bg-blue-200 transition-colors mx-0.5 align-middle">
-                          @{{ seg.content }}
+                          &#64;{{ seg.content }}
                         </button>
                       </ng-container>
                     </p>
