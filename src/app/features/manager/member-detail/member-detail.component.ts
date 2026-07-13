@@ -17,6 +17,12 @@ import { KpiProgressBarComponent } from '../../../shared/components/kpi-progress
 
 const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
 
+interface CommentSegment {
+  type: 'text' | 'mention';
+  content: string;
+  userId?: number;
+}
+
 @Component({
   selector: 'app-member-detail',
   standalone: true,
@@ -233,7 +239,16 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
                       <span class="text-[10px] text-gray-400 uppercase tracking-wide">{{ c.authorRole === 'MANAGER' ? 'Manager' : c.authorRole === 'TEAM_LEAD' ? 'Lead' : '' }}</span>
                       <span class="text-[10px] text-gray-400 ml-auto">{{ c.createdAt | date:'d MMM, HH:mm' }}</span>
                     </div>
-                    <p class="text-xs text-gray-700 whitespace-pre-line">{{ formatCommentBody(c.body) }}</p>
+                    <p class="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
+                      <ng-container *ngFor="let seg of parseCommentBody(c.body)">
+                        <span *ngIf="seg.type === 'text'">{{ seg.content }}</span>
+                        <button *ngIf="seg.type === 'mention'"
+                          (click)="seg.userId ? router.navigate(['/manager/member', seg.userId]) : null"
+                          class="inline-flex items-center gap-0.5 bg-blue-100 text-blue-700 font-semibold px-1.5 py-0.5 rounded-md text-[11px] hover:bg-blue-200 transition-colors mx-0.5 align-middle">
+                          @{{ seg.content }}
+                        </button>
+                      </ng-container>
+                    </p>
                   </div>
                 </div>
                 <!-- Add comment with mention -->
@@ -417,7 +432,7 @@ export class MemberDetailComponent implements OnInit {
   private readonly memberService = inject(MemberService);
   private readonly ratingService = inject(RatingService);
   private readonly logService = inject(LogService);
-  private readonly router = inject(Router);
+  readonly router = inject(Router);
   private readonly auth = inject(AuthService);
 
   get isManager(): boolean { return this.auth.role === 'MANAGER'; }
@@ -533,12 +548,21 @@ export class MemberDetailComponent implements OnInit {
     this.mentionQuery = '';
   }
 
-  formatCommentBody(body: string): string {
-    // Replace @email@cic.ae with @Name (for display)
-    return body.replace(/@([\w._%+\-]+@cic\.ae)/gi, (_, email) => {
-      const found = this.allMembers.find(m => m.email.toLowerCase() === email.toLowerCase());
-      return found ? `@${found.name}` : `@${email}`;
-    });
+  parseCommentBody(body: string): CommentSegment[] {
+    const segments: CommentSegment[] = [];
+    const regex = /@([\w._%+\-]+@cic\.ae)/gi;
+    let last = 0;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(body)) !== null) {
+      if (match.index > last) {
+        segments.push({ type: 'text', content: body.slice(last, match.index) });
+      }
+      const member = this.allMembers.find(m => m.email.toLowerCase() === match![1].toLowerCase());
+      segments.push({ type: 'mention', content: member ? member.name : match[1], userId: member?.userId });
+      last = regex.lastIndex;
+    }
+    if (last < body.length) segments.push({ type: 'text', content: body.slice(last) });
+    return segments;
   }
 
   addComment(log: DailyLogResponse): void {
