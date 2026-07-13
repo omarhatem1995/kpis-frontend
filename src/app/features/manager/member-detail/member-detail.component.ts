@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnChanges, SimpleChanges, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -443,7 +443,7 @@ interface CommentSegment {
     </div>
   `
 })
-export class MemberDetailComponent implements OnInit {
+export class MemberDetailComponent implements OnInit, OnChanges {
   @Input() id!: string;
 
   private readonly memberService = inject(MemberService);
@@ -781,7 +781,18 @@ export class MemberDetailComponent implements OnInit {
     });
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['id'] && !changes['id'].firstChange) {
+      this.selectedMonth.set(this.currentMonthStr());
+      this.loadAll();
+    }
+  }
+
   ngOnInit(): void {
+    this.loadAll();
+  }
+
+  private loadAll(): void {
     const uid = +this.id;
     const month = this.selectedMonth();
 
