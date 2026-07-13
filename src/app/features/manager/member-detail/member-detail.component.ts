@@ -237,9 +237,14 @@ interface CommentSegment {
                     <div class="flex items-center gap-1.5 mb-0.5">
                       <span class="text-xs font-semibold text-gray-800">{{ c.authorName }}</span>
                       <span class="text-[10px] text-gray-400 uppercase tracking-wide">{{ c.authorRole === 'MANAGER' ? 'Manager' : c.authorRole === 'TEAM_LEAD' ? 'Lead' : '' }}</span>
-                      <span class="text-[10px] text-gray-400 ml-auto">{{ c.createdAt | date:'d MMM, HH:mm' }}</span>
+                      <span class="text-[10px] text-gray-400 ml-auto">{{ c.createdAt | date:'d MMM, HH:mm' }}<span *ngIf="c.updatedAt" class="ml-1 italic">(edited)</span></span>
+                      <button *ngIf="isManager && editingCommentId !== c.id"
+                        (click)="startEditComment(c)"
+                        class="text-[10px] text-gray-400 hover:text-primary ml-1">Edit</button>
                     </div>
-                    <p class="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
+
+                    <!-- View mode -->
+                    <p *ngIf="editingCommentId !== c.id" class="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
                       <ng-container *ngFor="let seg of parseCommentBody(c.body)">
                         <span *ngIf="seg.type === 'text'">{{ seg.content }}</span>
                         <button *ngIf="seg.type === 'mention'"
@@ -249,6 +254,18 @@ interface CommentSegment {
                         </button>
                       </ng-container>
                     </p>
+
+                    <!-- Edit mode -->
+                    <div *ngIf="editingCommentId === c.id" class="mt-1 space-y-1">
+                      <textarea [(ngModel)]="editingCommentBody" rows="2"
+                        class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary resize-none bg-white"></textarea>
+                      <div class="flex gap-2">
+                        <button (click)="saveEditComment(log, c)" [disabled]="!editingCommentBody.trim()"
+                          class="text-xs bg-primary text-white px-3 py-1 rounded-lg disabled:opacity-40">Save</button>
+                        <button (click)="cancelEditComment()"
+                          class="text-xs border border-gray-300 text-gray-600 px-3 py-1 rounded-lg">Cancel</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <!-- Add comment with mention -->
@@ -513,13 +530,13 @@ export class MemberDetailComponent implements OnInit {
   commentSubmitting = new Set<number>();
 
   // Mention autocomplete
-  allMembers: MemberSummary[] = [];
+  allMembers = signal<MemberSummary[]>([]);
   mentionLogId: number | null = null;
   mentionQuery = '';
   get mentionSuggestions(): MemberSummary[] {
     if (!this.mentionQuery) return [];
     const q = this.mentionQuery.toLowerCase();
-    return this.allMembers.filter(m =>
+    return this.allMembers().filter(m =>
       m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
     ).slice(0, 6);
   }
@@ -541,7 +558,6 @@ export class MemberDetailComponent implements OnInit {
 
   selectMention(log: DailyLogResponse, member: MemberSummary): void {
     const val = this.commentInputs[log.id] ?? '';
-    // Replace trailing @query with @email
     const replaced = val.replace(/@[\w.\-]*$/, `@${member.email} `);
     this.commentInputs[log.id] = replaced;
     this.mentionLogId = null;
@@ -549,6 +565,7 @@ export class MemberDetailComponent implements OnInit {
   }
 
   parseCommentBody(body: string): CommentSegment[] {
+    const members = this.allMembers(); // signal read — template will re-render when allMembers changes
     const segments: CommentSegment[] = [];
     const regex = /@([\w._%+\-]+@cic\.ae)/gi;
     let last = 0;
@@ -557,12 +574,38 @@ export class MemberDetailComponent implements OnInit {
       if (match.index > last) {
         segments.push({ type: 'text', content: body.slice(last, match.index) });
       }
-      const member = this.allMembers.find(m => m.email.toLowerCase() === match![1].toLowerCase());
+      const member = members.find(m => m.email.toLowerCase() === match![1].toLowerCase());
       segments.push({ type: 'mention', content: member ? member.name : match[1], userId: member?.userId });
       last = regex.lastIndex;
     }
     if (last < body.length) segments.push({ type: 'text', content: body.slice(last) });
     return segments;
+  }
+
+  // Comment editing (manager only)
+  editingCommentId: number | null = null;
+  editingCommentBody = '';
+
+  startEditComment(c: LogComment): void {
+    this.editingCommentId = c.id;
+    this.editingCommentBody = c.body;
+    this.mentionLogId = null;
+  }
+
+  cancelEditComment(): void {
+    this.editingCommentId = null;
+    this.editingCommentBody = '';
+  }
+
+  saveEditComment(log: DailyLogResponse, c: LogComment): void {
+    const body = this.editingCommentBody.trim();
+    if (!body) return;
+    this.logService.updateComment(log.id, c.id, body).subscribe(updated => {
+      this.logs.update(ls => ls.map(l => l.id === log.id
+        ? { ...l, comments: l.comments.map(x => x.id === c.id ? updated : x) }
+        : l));
+      this.editingCommentId = null;
+    });
   }
 
   addComment(log: DailyLogResponse): void {
@@ -756,7 +799,7 @@ export class MemberDetailComponent implements OnInit {
       this.editRole = m.role;
       this.editTeamLeadId = m.teamLeadId;
     });
-    this.memberService.getMembers({ size: 200 }).subscribe(r => { this.allMembers = r.data; });
+    this.memberService.getMembers({ size: 200 }).subscribe(r => { this.allMembers.set(r.data); });
     this.loadLogs(uid, month);
     this.memberService.getMemberKpi(uid, month).subscribe(k => {
       this.kpi.set(k);

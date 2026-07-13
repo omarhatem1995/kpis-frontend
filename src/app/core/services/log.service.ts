@@ -51,4 +51,8 @@ export class LogService {
   addComment(logId: number, body: string): Observable<LogComment> {
     return this.http.post<ApiResponse<LogComment>>(`${this.base}/logs/${logId}/comments`, { body }).pipe(map(r => r.data));
   }
+
+  updateComment(logId: number, commentId: number, body: string): Observable<LogComment> {
+    return this.http.patch<ApiResponse<LogComment>>(`${this.base}/logs/${logId}/comments/${commentId}`, { body }).pipe(map(r => r.data));
+  }
 }

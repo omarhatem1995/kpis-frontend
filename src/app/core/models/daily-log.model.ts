@@ -83,6 +83,7 @@ export interface LogComment {
   authorRole: 'MEMBER' | 'TEAM_LEAD' | 'MANAGER';
   body: string;
   createdAt: string;
+  updatedAt: string | null;
 }
 
 export interface ProjectItem {
