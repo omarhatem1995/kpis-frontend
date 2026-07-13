@@ -237,7 +237,13 @@ export class NavShellComponent implements OnInit {
         this.router.navigate([isManager ? '/manager/leave' : '/member/leave']);
         break;
       case 'WFH_REQUEST':
-        this.router.navigate([isManager ? '/manager/wfh' : '/member/history']);
+        if (isManager && n.referenceId) {
+          this.memberService.getLog(n.referenceId).subscribe(log => {
+            this.router.navigate(['/manager/member', log.userId]);
+          });
+        } else {
+          this.router.navigate(['/member/history']);
+        }
         break;
       case 'RATING_WARNING':
         this.router.navigate(['/member/kpi']);

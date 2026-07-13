@@ -173,8 +173,8 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-sm font-semibold text-gray-700">All Logs</h3>
         <div class="flex items-center gap-2">
-          <button (click)="shiftMonth(-1)"
-            class="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 text-xs">◀</button>
+          <button (click)="shiftMonth(-1)" [disabled]="!canGoBack()"
+            class="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 text-xs disabled:opacity-30">◀</button>
           <span class="text-sm font-medium text-gray-700 w-28 text-center">{{ selectedMonthLabel }}</span>
           <button (click)="shiftMonth(1)" [disabled]="isCurrentMonth"
             class="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 text-xs disabled:opacity-30">▶</button>
@@ -233,16 +233,36 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
                       <span class="text-[10px] text-gray-400 uppercase tracking-wide">{{ c.authorRole === 'MANAGER' ? 'Manager' : c.authorRole === 'TEAM_LEAD' ? 'Lead' : '' }}</span>
                       <span class="text-[10px] text-gray-400 ml-auto">{{ c.createdAt | date:'d MMM, HH:mm' }}</span>
                     </div>
-                    <p class="text-xs text-gray-700 whitespace-pre-line">{{ c.body }}</p>
+                    <p class="text-xs text-gray-700 whitespace-pre-line">{{ formatCommentBody(c.body) }}</p>
                   </div>
                 </div>
-                <!-- Add comment -->
-                <div class="flex gap-2 mt-1">
-                  <input [(ngModel)]="commentInputs[log.id]" (keyup.enter)="addComment(log)"
-                    type="text" placeholder="Add a comment… (Enter to send)"
-                    class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary bg-gray-50" />
-                  <button (click)="addComment(log)" [disabled]="!(commentInputs[log.id] || '').trim() || commentSubmitting.has(log.id)"
-                    class="text-xs bg-primary text-white px-3 py-1.5 rounded-lg disabled:opacity-40">Send</button>
+                <!-- Add comment with mention -->
+                <div class="relative mt-1">
+                  <!-- Mention suggestions dropdown -->
+                  <div *ngIf="mentionLogId === log.id && mentionSuggestions.length > 0"
+                    class="absolute bottom-full left-0 mb-1 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-30 overflow-hidden">
+                    <div *ngFor="let m of mentionSuggestions"
+                      (mousedown)="selectMention(log, m)"
+                      class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-primary-light">
+                      <div class="w-6 h-6 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                        {{ m.name[0] }}
+                      </div>
+                      <div class="min-w-0">
+                        <p class="text-xs font-medium text-gray-900 truncate">{{ m.name }}</p>
+                        <p class="text-[10px] text-gray-400 truncate">{{ m.email }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex gap-2">
+                    <input [(ngModel)]="commentInputs[log.id]"
+                      (input)="onCommentInput(log.id, $event)"
+                      (keyup.enter)="addComment(log)"
+                      (blur)="mentionLogId = null"
+                      type="text" placeholder="Add a comment… type @ to mention"
+                      class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary bg-gray-50" />
+                    <button (click)="addComment(log)" [disabled]="!(commentInputs[log.id] || '').trim() || commentSubmitting.has(log.id)"
+                      class="text-xs bg-primary text-white px-3 py-1.5 rounded-lg disabled:opacity-40">Send</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -440,6 +460,7 @@ export class MemberDetailComponent implements OnInit {
 
   // Month navigation
   logsLoading = signal(false);
+  canGoBack = signal(true);
   selectedMonth = signal<string>(this.currentMonthStr());
 
   get selectedMonthLabel(): string {
@@ -455,9 +476,11 @@ export class MemberDetailComponent implements OnInit {
   }
 
   shiftMonth(dir: 1 | -1): void {
+    if (dir === -1 && !this.canGoBack()) return;
     const [y, m] = this.selectedMonth().split('-').map(Number);
     const d = new Date(y, m - 1 + dir, 1);
     this.selectedMonth.set(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    if (dir === 1) this.canGoBack.set(true);
     this.loadLogs(+this.id, this.selectedMonth());
   }
 
@@ -466,6 +489,7 @@ export class MemberDetailComponent implements OnInit {
     this.memberService.getMemberLogs(uid, month).subscribe(logs => {
       this.logs.set([...logs].sort((a, b) => b.logDate.localeCompare(a.logDate)));
       this.logsLoading.set(false);
+      this.canGoBack.set(logs.length > 0);
     });
   }
 
@@ -473,10 +497,55 @@ export class MemberDetailComponent implements OnInit {
   commentInputs: Record<number, string> = {};
   commentSubmitting = new Set<number>();
 
+  // Mention autocomplete
+  allMembers: MemberSummary[] = [];
+  mentionLogId: number | null = null;
+  mentionQuery = '';
+  get mentionSuggestions(): MemberSummary[] {
+    if (!this.mentionQuery) return [];
+    const q = this.mentionQuery.toLowerCase();
+    return this.allMembers.filter(m =>
+      m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
+    ).slice(0, 6);
+  }
+
+  onCommentInput(logId: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const val = input.value;
+    const pos = input.selectionStart ?? val.length;
+    const before = val.slice(0, pos);
+    const match = /@([\w.\-]*)$/.exec(before);
+    if (match) {
+      this.mentionLogId = logId;
+      this.mentionQuery = match[1];
+    } else {
+      this.mentionLogId = null;
+      this.mentionQuery = '';
+    }
+  }
+
+  selectMention(log: DailyLogResponse, member: MemberSummary): void {
+    const val = this.commentInputs[log.id] ?? '';
+    // Replace trailing @query with @email
+    const replaced = val.replace(/@[\w.\-]*$/, `@${member.email} `);
+    this.commentInputs[log.id] = replaced;
+    this.mentionLogId = null;
+    this.mentionQuery = '';
+  }
+
+  formatCommentBody(body: string): string {
+    // Replace @email@cic.ae with @Name (for display)
+    return body.replace(/@([\w._%+\-]+@cic\.ae)/gi, (_, email) => {
+      const found = this.allMembers.find(m => m.email.toLowerCase() === email.toLowerCase());
+      return found ? `@${found.name}` : `@${email}`;
+    });
+  }
+
   addComment(log: DailyLogResponse): void {
     const body = (this.commentInputs[log.id] ?? '').trim();
     if (!body) return;
     this.commentSubmitting.add(log.id);
+    this.mentionLogId = null;
     this.logService.addComment(log.id, body).subscribe(comment => {
       this.logs.update(ls => ls.map(l => l.id === log.id
         ? { ...l, comments: [...(l.comments ?? []), comment] }
@@ -663,6 +732,7 @@ export class MemberDetailComponent implements OnInit {
       this.editRole = m.role;
       this.editTeamLeadId = m.teamLeadId;
     });
+    this.memberService.getMembers({ size: 200 }).subscribe(r => { this.allMembers = r.data; });
     this.loadLogs(uid, month);
     this.memberService.getMemberKpi(uid, month).subscribe(k => {
       this.kpi.set(k);
