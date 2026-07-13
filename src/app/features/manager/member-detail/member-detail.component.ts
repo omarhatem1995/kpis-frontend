@@ -8,7 +8,7 @@ import { RatingService } from '../../../core/services/rating.service';
 import { LogService } from '../../../core/services/log.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MemberSummary, DayOfWeek, TeamName, ModuleName, UserRole } from '../../../core/models/user.model';
-import { DailyLogResponse, LogComment } from '../../../core/models/daily-log.model';
+import { DailyLogResponse, LogComment, RatingSummary } from '../../../core/models/daily-log.model';
 import { KpiReport, WeeklyReview, WeeklyReviewItem } from '../../../core/models/kpi-report.model';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
 import { ScorePillComponent } from '../../../shared/components/score-pill/score-pill.component';
@@ -241,7 +241,7 @@ const ALL_DAYS: DayOfWeek[] = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY
                   <input [(ngModel)]="commentInputs[log.id]" (keyup.enter)="addComment(log)"
                     type="text" placeholder="Add a comment… (Enter to send)"
                     class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary bg-gray-50" />
-                  <button (click)="addComment(log)" [disabled]="!commentInputs[log.id]?.trim() || commentSubmitting.has(log.id)"
+                  <button (click)="addComment(log)" [disabled]="!(commentInputs[log.id] || '').trim() || commentSubmitting.has(log.id)"
                     class="text-xs bg-primary text-white px-3 py-1.5 rounded-lg disabled:opacity-40">Send</button>
                 </div>
               </div>
@@ -638,7 +638,8 @@ export class MemberDetailComponent implements OnInit {
   saveEditRatingByDate(group: { date: string; logs: DailyLogResponse[]; rating: DailyLogResponse['rating'] }): void {
     if (!group.rating || this.editRatingValue === 0) return;
     this.ratingService.updateRating(group.rating.id, this.editRatingValue, this.editRatingComment).subscribe(r => {
-      this.logs.update(ls => ls.map(l => l.logDate === group.date ? { ...l, rating: r } : l));
+      const updated: RatingSummary = { id: r.id, rating: r.rating, comment: r.comment, ratedAt: r.ratedAt, isAutomated: r.isAutomated, ratedByName: null };
+      this.logs.update(ls => ls.map(l => l.logDate === group.date ? { ...l, rating: updated } : l));
       this.editingRatingDate.set(null);
       this.memberService.getMember(+this.id).subscribe(m => this.member.set(m));
     });
