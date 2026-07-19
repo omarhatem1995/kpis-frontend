@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiBaseUrl: "https://omar-kortam-omar-space.hf.space/api/v1",
+  apiBaseUrl: 'https://cic-kpis-backend-dev.eshtri-cluster-eu-de-1-bx-8f23923b84c5cec3cecb2d74397b77c3-0000.eu-de.containers.appdomain.cloud/api/v1',
   firebase: {
     apiKey: "AIzaSyA2FcFMUdasVtK5bl-Z1xtdiS28TaNIp20",
     authDomain: "cic-kpis.firebaseapp.com",
