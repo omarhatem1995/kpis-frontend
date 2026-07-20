@@ -86,8 +86,16 @@ export class LoginComponent {
     this.auth.login(this.email, this.password).subscribe({
       next: res => {
         this.loading.set(false);
-        const isManagerLike = res.role === 'MANAGER' || res.role === 'TEAM_LEAD';
-        this.router.navigate([isManagerLike ? '/manager' : '/member']);
+        const isMemberLike = res.role === 'MEMBER' || res.role === 'TEAM_LEAD';
+        if (isMemberLike) {
+          const dest = res.role === 'TEAM_LEAD' ? '/manager' : '/member';
+          this.auth.loadWfhSchedule().subscribe({
+            next: () => this.router.navigate([dest]),
+            error: () => this.router.navigate([dest])
+          });
+        } else {
+          this.router.navigate(['/manager']);
+        }
       },
       error: err => {
         this.loading.set(false);

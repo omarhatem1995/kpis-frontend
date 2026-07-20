@@ -27,11 +27,34 @@ const SELF_LEARNING_LABELS: Record<SelfLearning, string> = {
     <div>
       <div class="flex items-center gap-2 mb-6">
         <h2 class="text-lg font-semibold text-gray-900">{{ editLogId ? 'Edit Task' : 'New Task' }}</h2>
-        <span class="text-xs text-gray-400">{{ todayLabel }}</span>
         @if (editLogId) {
           <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Editing</span>
         }
       </div>
+
+      <!-- Date toggle (only for new logs) -->
+      @if (!editLogId) {
+        <div class="flex gap-2 mb-6">
+          <button type="button" (click)="selectedDate = 'today'"
+            class="flex-1 py-2 rounded-lg text-sm font-medium border transition-colors"
+            [class.bg-primary]="selectedDate === 'today'"
+            [class.text-white]="selectedDate === 'today'"
+            [class.border-primary]="selectedDate === 'today'"
+            [class.border-gray-200]="selectedDate !== 'today'"
+            [class.text-gray-600]="selectedDate !== 'today'">
+            Today — {{ todayLabel }}
+          </button>
+          <button type="button" (click)="selectedDate = 'yesterday'"
+            class="flex-1 py-2 rounded-lg text-sm font-medium border transition-colors"
+            [class.bg-primary]="selectedDate === 'yesterday'"
+            [class.text-white]="selectedDate === 'yesterday'"
+            [class.border-primary]="selectedDate === 'yesterday'"
+            [class.border-gray-200]="selectedDate !== 'yesterday'"
+            [class.text-gray-600]="selectedDate !== 'yesterday'">
+            Yesterday — {{ yesterdayLabel }}
+          </button>
+        </div>
+      }
 
       <!-- Step progress -->
       <div class="flex gap-1 mb-8">
@@ -217,8 +240,20 @@ export class DailyLogFormComponent implements OnInit {
     collaboratorIds: [] as number[]
   };
 
+  selectedDate: 'today' | 'yesterday' = 'today';
+
   get todayLabel(): string {
     return new Date().toLocaleDateString('en-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  get yesterdayLabel(): string {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toLocaleDateString('en-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  private formatDate(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
   get selfLearningOptions() {
@@ -291,8 +326,9 @@ export class DailyLogFormComponent implements OnInit {
   submit(): void {
     this.submitting.set(true);
     this.submitError.set('');
-    const today = new Date();
-    const logDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const d = new Date();
+    if (this.selectedDate === 'yesterday') d.setDate(d.getDate() - 1);
+    const logDate = this.formatDate(d);
 
     const payload = {
       logDate,

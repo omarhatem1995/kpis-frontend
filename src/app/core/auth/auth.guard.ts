@@ -13,6 +13,7 @@ export function authGuard(requiredRole: UserRole): CanActivateFn {
     const role = auth.role;
     const isManagerLike = role === 'MANAGER' || role === 'TEAM_LEAD';
     if (requiredRole === 'MANAGER' && isManagerLike) return true;
+    if (requiredRole === 'MEMBER' && (role === 'MEMBER' || role === 'TEAM_LEAD')) return true;
     if (role !== requiredRole) {
       const redirect = isManagerLike ? '/manager/overview' : '/member/dashboard';
       return router.createUrlTree([redirect]);

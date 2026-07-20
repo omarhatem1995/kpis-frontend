@@ -63,9 +63,11 @@ export class OtpVerifyComponent implements OnInit {
     this.error.set('');
     this.auth.verifyOtp(this.email, otp).subscribe({
       next: res => {
-        if (res.role === 'MEMBER') {
+        const isMemberLike = res.role === 'MEMBER' || res.role === 'TEAM_LEAD';
+        if (isMemberLike) {
           this.auth.loadWfhSchedule().subscribe({
-            complete: () => this.router.navigate(['/member/dashboard'])
+            next: () => this.router.navigate([res.role === 'TEAM_LEAD' ? '/manager/overview' : '/member/dashboard']),
+            error: () => this.router.navigate([res.role === 'TEAM_LEAD' ? '/manager/overview' : '/member/dashboard'])
           });
         } else {
           this.router.navigate(['/manager/overview']);

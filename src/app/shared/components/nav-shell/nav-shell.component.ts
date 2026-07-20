@@ -176,7 +176,11 @@ export class NavShellComponent implements OnInit {
     if (r === 'TEAM_LEAD') return 'Team Lead';
     return 'Member';
   }
-  get navItems()  { return (this.role === 'MANAGER' || this.role === 'TEAM_LEAD') ? MANAGER_NAV : MEMBER_NAV; }
+  get navItems()  {
+    if (this.role === 'MANAGER') return MANAGER_NAV;
+    if (this.role === 'TEAM_LEAD') return [...MANAGER_NAV, ...MEMBER_NAV];
+    return MEMBER_NAV;
+  }
 
   ngOnInit(): void {
     this.loadNotifications();
